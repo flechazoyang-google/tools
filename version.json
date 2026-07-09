@@ -1,7 +1,7 @@
 {
-  "versionCode": 6,
-  "versionName": "1.2.1",
-  "downloadUrl": "https://gitee.com/yang-genhao/tools/releases/download/v1.2.1/toolbox-v1.2.1.apk",
-  "downloadUrlFallback": "https://github.com/flechazoyang-google/tools/releases/download/v1.2.1/toolbox-v1.2.1.apk",
-  "releaseNotes": "- 新增检查更新功能\n- 更换应用图标\n- 工具分类标签栏\n- 修复 IP 查询与拼豆图纸 bug"
+  "versionCode": 7,
+  "versionName": "1.2.2",
+  "downloadUrl": "https://gitee.com/yang-genhao/tools/releases/download/v1.2.2/toolbox-v1.2.2.apk",
+  "downloadUrlFallback": "https://github.com/flechazoyang-google/tools/releases/download/v1.2.2/toolbox-v1.2.2.apk",
+  "releaseNotes": "- 修复 primary 色过黑问题\n- 修复图标循环引用\n- 更新检查改用 Gitee 源\n- 优化密码箱与设置页配色"
 }
