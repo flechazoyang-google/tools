@@ -30,11 +30,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.example.toolbox.BuildConfig
 import com.example.toolbox.core.components.CommonButton
 import com.example.toolbox.core.components.SectionHeader
 import com.example.toolbox.core.theme.ThemeMode
@@ -113,8 +113,19 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(28.dp))
             SectionHeader("关于")
             Spacer(modifier = Modifier.height(12.dp))
-            Text("版本 1.0.0", style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(8.dp))
+            Text("版本 ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.height(12.dp))
+            CommonButton(
+                text = "检查更新",
+                onClick = {
+                    scope.launch {
+                        message = "正在检查…"
+                        message = viewModel.checkUpdate()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(12.dp))
             Text(
                 "所有数据均存储在本地设备（Room / DataStore）。汇率换算与 IP 属地查询会经由公开 API 获取，其中 IP 查询会将 IP 地址发送至第三方服务，结果会缓存在本地。",
                 style = MaterialTheme.typography.bodyMedium,
