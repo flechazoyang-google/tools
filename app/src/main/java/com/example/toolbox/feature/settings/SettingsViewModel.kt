@@ -33,6 +33,7 @@ private data class VersionInfo(
     val versionCode: Int = 0,
     val versionName: String = "",
     val downloadUrl: String = "",
+    val downloadUrlFallback: String = "",
 )
 
 @HiltViewModel
@@ -92,7 +93,10 @@ class SettingsViewModel @Inject constructor(
             val remote = gson.fromJson(body, VersionInfo::class.java)
 
             if (remote.versionCode > BuildConfig.VERSION_CODE) {
-                val apkFile = downloadApk(client, remote.downloadUrl)
+                var apkFile = downloadApk(client, remote.downloadUrl)
+                if (apkFile == null && remote.downloadUrlFallback.isNotBlank()) {
+                    apkFile = downloadApk(client, remote.downloadUrlFallback)
+                }
                 if (apkFile != null) {
                     installApk(apkFile)
                     "正在安装 ${remote.versionName}…"
