@@ -27,7 +27,7 @@ import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
 
-private const val VERSION_URL = "https://raw.githubusercontent.com/flechazoyang-google/tools/main/version.json"
+private const val VERSION_URL = "https://gitee.com/yang-genhao/tools/raw/main/version.json"
 
 private data class VersionInfo(
     val versionCode: Int = 0,

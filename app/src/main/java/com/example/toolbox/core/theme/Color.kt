@@ -34,20 +34,20 @@ object ToolColors {
     val security = Color(0xFF6B7280)  // 安全类 — 灰色
 }
 
-// ── Material3 color scheme aliases (gray-based) ──
-val PrimaryLight            = OnSurfaceLight
-val OnPrimaryLight          = SurfaceLight
-val PrimaryContainerLight   = SurfaceVariantLight
-val OnPrimaryContainerLight = OnSurfaceLight
+// ── Material3 color scheme aliases (soft gray primary) ──
+val PrimaryLight            = Color(0xFF3A3A3C)
+val OnPrimaryLight          = Color(0xFFFFFFFF)
+val PrimaryContainerLight   = Color(0xFFE5E5EA)
+val OnPrimaryContainerLight = Color(0xFF1D1D1F)
 val SecondaryLight          = OnSurfaceVariantLight
 val TertiaryLight           = OnSurfaceVariantLight
 val ErrorLight              = Color(0xFFDC2626)
 val OnErrorLight            = Color(0xFFFFFFFF)
 
-val PrimaryDark            = OnSurfaceDark
-val OnPrimaryDark          = SurfaceDark
-val PrimaryContainerDark   = SurfaceVariantDark
-val OnPrimaryContainerDark = OnSurfaceDark
+val PrimaryDark            = Color(0xFFD1D1D6)
+val OnPrimaryDark          = Color(0xFF1C1C1E)
+val PrimaryContainerDark   = Color(0xFF3A3A3C)
+val OnPrimaryContainerDark = Color(0xFFE5E5EA)
 val SecondaryDark          = OnSurfaceVariantDark
 val TertiaryDark           = OnSurfaceVariantDark
 val ErrorDark              = Color(0xFFF87171)
