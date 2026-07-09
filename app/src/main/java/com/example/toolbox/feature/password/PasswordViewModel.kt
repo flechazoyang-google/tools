@@ -49,6 +49,11 @@ class PasswordViewModel @Inject constructor(
         return ok
     }
 
+    /** Unlock via biometric authentication — skips master password check. */
+    fun unlockWithBiometric() {
+        unlocked = true
+    }
+
     fun lock() {
         unlocked = false
     }

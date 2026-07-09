@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.toolbox"
         minSdk = 24
         targetSdk = 34
-        versionCode = 7
-        versionName = "1.2.2"
+        versionCode = 9
+        versionName = "1.3.1"
     }
 
     buildTypes {
@@ -95,6 +95,9 @@ dependencies {
 
     // AndroidX Security (Keystore-backed AES)
     implementation("androidx.security:security-crypto:1.1.0")
+
+    // Biometric authentication
+    implementation("androidx.biometric:biometric:1.1.0")
 
     // WorkManager (background exchange-rate refresh)
     implementation("androidx.work:work-runtime-ktx:2.9.1")

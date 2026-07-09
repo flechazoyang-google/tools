@@ -1,7 +1,7 @@
 {
-  "versionCode": 7,
-  "versionName": "1.2.2",
-  "downloadUrl": "https://gitee.com/yang-genhao/tools/releases/download/v1.2.2/toolbox-v1.2.2.apk",
-  "downloadUrlFallback": "https://github.com/flechazoyang-google/tools/releases/download/v1.2.2/toolbox-v1.2.2.apk",
-  "releaseNotes": "- 修复 primary 色过黑问题\n- 修复图标循环引用\n- 更新检查改用 Gitee 源\n- 优化密码箱与设置页配色"
+  "versionCode": 9,
+  "versionName": "1.3.1",
+  "downloadUrl": "https://gitee.com/yang-genhao/tools/releases/download/v1.3.1/toolbox-1.3.1.apk",
+  "downloadUrlFallback": "https://github.com/flechazoyang-google/tools/releases/download/v1.3.1/toolbox-1.3.1.apk",
+  "releaseNotes": "- 新增指纹解锁功能\n- 密码箱支持生物识别快速解锁\n- 升级 AndroidX Biometric 依赖"
 }

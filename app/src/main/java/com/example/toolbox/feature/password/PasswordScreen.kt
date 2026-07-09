@@ -1,5 +1,8 @@
 package com.example.toolbox.feature.password
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,18 +11,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -35,10 +40,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -47,7 +54,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
+import com.example.toolbox.core.util.BiometricAuthManager
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -56,9 +66,10 @@ import com.example.toolbox.core.components.CommonButton
 import com.example.toolbox.core.components.CommonCard
 import com.example.toolbox.core.components.CommonTextField
 import com.example.toolbox.core.components.SectionHeader
-import com.example.toolbox.core.components.TopBar
 import com.example.toolbox.data.local.entity.PasswordEntity
 import com.example.toolbox.data.repository.PasswordInput
+
+private val Indigo = Color(0xFF6366F1)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,20 +78,10 @@ fun PasswordScreen(viewModel: PasswordViewModel = hiltViewModel()) {
     val needsSetup = masterHash == null
     val unlocked = viewModel.unlocked
     var showAdd by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val authManager = remember { BiometricAuthManager(context) }
 
     Scaffold(
-        topBar = {
-            TopBar(
-                title = "密码箱",
-                actions = {
-                    if (!needsSetup && unlocked) {
-                        IconButton(onClick = viewModel::lock) {
-                            Icon(Icons.Filled.Lock, contentDescription = "锁定")
-                        }
-                    }
-                },
-            )
-        },
         floatingActionButton = {
             if (!needsSetup && unlocked) {
                 FloatingActionButton(onClick = { showAdd = true }) {
@@ -93,11 +94,18 @@ fun PasswordScreen(viewModel: PasswordViewModel = hiltViewModel()) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(inner)
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .padding(horizontal = 20.dp),
         ) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                "密码箱",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+
             when {
                 needsSetup -> SetupMasterCard(viewModel)
-                !unlocked -> UnlockCard(viewModel)
+                !unlocked -> UnlockCard(viewModel, authManager)
                 else -> PasswordList(viewModel)
             }
         }
@@ -117,16 +125,36 @@ private fun SetupMasterCard(viewModel: PasswordViewModel) {
     var confirm by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
 
-    CommonCard(Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text("设置主密码", style = MaterialTheme.typography.titleLarge)
+    CommonCard(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            // Lock icon
+            Surface(
+                shape = CircleShape,
+                color = Indigo,
+                modifier = Modifier.size(48.dp).align(Alignment.CenterHorizontally),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Filled.Lock,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                "设置主密码",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "用于解锁本地密码箱。主密码仅作验证，密码数据由 Android Keystore 加密，绝不上传。",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             PasswordField(value = pw, label = "主密码", onValueChange = { pw = it })
             Spacer(modifier = Modifier.height(12.dp))
             PasswordField(value = confirm, label = "确认主密码", onValueChange = { confirm = it })
@@ -134,7 +162,7 @@ private fun SetupMasterCard(viewModel: PasswordViewModel) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             CommonButton(
                 text = "确认",
                 modifier = Modifier.fillMaxWidth(),
@@ -151,25 +179,105 @@ private fun SetupMasterCard(viewModel: PasswordViewModel) {
 }
 
 @Composable
-private fun UnlockCard(viewModel: PasswordViewModel) {
+private fun UnlockCard(viewModel: PasswordViewModel, authManager: BiometricAuthManager) {
     var pw by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    val shakeOffset = remember { Animatable(0f) }
 
-    CommonCard(Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text("解锁密码箱", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(16.dp))
-            PasswordField(value = pw, label = "主密码", onValueChange = { pw = it })
-            if (error != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+    LaunchedEffect(error) {
+        if (error != null) {
+            shakeOffset.snapTo(0f)
+            shakeOffset.animateTo(10f, tween(40))
+            shakeOffset.animateTo(-10f, tween(40))
+            shakeOffset.animateTo(7f, tween(40))
+            shakeOffset.animateTo(-7f, tween(40))
+            shakeOffset.animateTo(4f, tween(40))
+            shakeOffset.animateTo(-4f, tween(40))
+            shakeOffset.animateTo(0f, tween(40))
+        }
+    }
+
+    CommonCard(
+        Modifier.fillMaxWidth().offset(x = shakeOffset.value.dp),
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            // Lock icon
+            Surface(
+                shape = CircleShape,
+                color = Indigo,
+                modifier = Modifier.size(48.dp).align(Alignment.CenterHorizontally),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Filled.Lock,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                "解锁密码箱",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "您的密码已加密存储在本地",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            PasswordField(
+                value = pw,
+                label = "主密码",
+                onValueChange = { pw = it },
+                isError = error != null,
+            )
+            if (error != null) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    error!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            Spacer(modifier = Modifier.height(20.dp))
             CommonButton(
                 text = "解锁",
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { if (!viewModel.unlock(pw)) error = "密码错误" },
             )
+            if (authManager.isAvailable) {
+                Spacer(modifier = Modifier.height(12.dp))
+                TextButton(
+                    onClick = {
+                        authManager.authenticate(
+                            title = "解锁密码箱",
+                            subtitle = "验证指纹以解锁",
+                            onSuccess = { viewModel.unlockWithBiometric() },
+                            onError = { error = it },
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        Icons.Filled.Fingerprint,
+                        contentDescription = null,
+                        tint = Indigo,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "使用指纹解锁",
+                        color = Indigo,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
         }
     }
 }
@@ -188,6 +296,7 @@ private fun PasswordList(viewModel: PasswordViewModel) {
         }
     }
 
+    Spacer(modifier = Modifier.height(16.dp))
     CommonTextField(value = query, onValueChange = { query = it }, label = "搜索", placeholder = "站点 / 账号 / 标签")
     Spacer(modifier = Modifier.height(12.dp))
     SectionHeader("已保存 ${items.size} 条")
@@ -318,7 +427,12 @@ private fun AddPasswordDialog(onDismiss: () -> Unit, onConfirm: (PasswordInput) 
 }
 
 @Composable
-private fun PasswordField(value: String, label: String, onValueChange: (String) -> Unit) {
+private fun PasswordField(
+    value: String,
+    label: String,
+    onValueChange: (String) -> Unit,
+    isError: Boolean = false,
+) {
     var show by remember { mutableStateOf(false) }
     OutlinedTextField(
         value = value,
@@ -327,6 +441,7 @@ private fun PasswordField(value: String, label: String, onValueChange: (String) 
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
+        isError = isError,
         visualTransformation = if (show) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
             IconButton(onClick = { show = !show }) {
