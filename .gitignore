@@ -12,3 +12,5 @@ Thumbs.db
 *.hprof
 .cxx/
 *.cxx/
+.workbuddy/
+.reasonix/
