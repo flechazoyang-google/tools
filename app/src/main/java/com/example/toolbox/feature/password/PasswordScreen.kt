@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
@@ -78,6 +79,8 @@ fun PasswordScreen(viewModel: PasswordViewModel = hiltViewModel()) {
     val needsSetup = masterHash == null
     val unlocked = viewModel.unlocked
     var showAdd by remember { mutableStateOf(false) }
+    var editEntity by remember { mutableStateOf<PasswordEntity?>(null) }
+    var deleteTarget by remember { mutableStateOf<PasswordEntity?>(null) }
     val context = LocalContext.current
     val authManager = remember { BiometricAuthManager(context) }
 
@@ -106,7 +109,7 @@ fun PasswordScreen(viewModel: PasswordViewModel = hiltViewModel()) {
             when {
                 needsSetup -> SetupMasterCard(viewModel)
                 !unlocked -> UnlockCard(viewModel, authManager)
-                else -> PasswordList(viewModel)
+                else -> PasswordList(viewModel, onEdit = { editEntity = it }, onDelete = { deleteTarget = it })
             }
         }
     }
@@ -116,6 +119,32 @@ fun PasswordScreen(viewModel: PasswordViewModel = hiltViewModel()) {
             viewModel.add(input)
             showAdd = false
         }
+    }
+
+    editEntity?.let { entity ->
+        if (!needsSetup && unlocked) {
+            EditPasswordDialog(
+                entity = entity,
+                password = viewModel.decrypt(entity),
+                onDismiss = { editEntity = null },
+            ) { input ->
+                viewModel.update(entity, input)
+                editEntity = null
+            }
+        }
+    }
+
+    deleteTarget?.let { entity ->
+        AlertDialog(
+            onDismissRequest = { deleteTarget = null },
+            title = { Text("确认删除") },
+            text = {
+                val name = entity.site.ifBlank { "未命名" }
+                Text("确定要删除「${name}」的密码吗？此操作不可撤销。")
+            },
+            confirmButton = { Button(onClick = { viewModel.delete(entity); deleteTarget = null }) { Text("删除") } },
+            dismissButton = { TextButton(onClick = { deleteTarget = null }) { Text("取消") } },
+        )
     }
 }
 
@@ -127,33 +156,20 @@ private fun SetupMasterCard(viewModel: PasswordViewModel) {
 
     CommonCard(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.padding(24.dp)) {
-            // Lock icon
             Surface(
                 shape = CircleShape,
                 color = Indigo,
                 modifier = Modifier.size(48.dp).align(Alignment.CenterHorizontally),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Filled.Lock,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp),
-                    )
+                    Icon(Icons.Filled.Lock, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                "设置主密码",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
+            Text("设置主密码", style = MaterialTheme.typography.titleLarge, modifier = Modifier.align(Alignment.CenterHorizontally))
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                "用于解锁本地密码箱。主密码仅作验证，密码数据由 Android Keystore 加密，绝不上传。",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Text("用于解锁本地密码箱。主密码仅作验证，密码数据由 Android Keystore 加密，绝不上传。",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(20.dp))
             PasswordField(value = pw, label = "主密码", onValueChange = { pw = it })
             Spacer(modifier = Modifier.height(12.dp))
@@ -163,17 +179,13 @@ private fun SetupMasterCard(viewModel: PasswordViewModel) {
                 Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(modifier = Modifier.height(20.dp))
-            CommonButton(
-                text = "确认",
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    when {
-                        pw.length < 4 -> error = "主密码至少 4 位"
-                        pw != confirm -> error = "两次输入不一致"
-                        else -> viewModel.setupMaster(pw)
-                    }
-                },
-            )
+            CommonButton(text = "确认", modifier = Modifier.fillMaxWidth(), onClick = {
+                when {
+                    pw.length < 4 -> error = "主密码至少 4 位"
+                    pw != confirm -> error = "两次输入不一致"
+                    else -> viewModel.setupMaster(pw)
+                }
+            })
         }
     }
 }
@@ -187,95 +199,41 @@ private fun UnlockCard(viewModel: PasswordViewModel, authManager: BiometricAuthM
     LaunchedEffect(error) {
         if (error != null) {
             shakeOffset.snapTo(0f)
-            shakeOffset.animateTo(10f, tween(40))
-            shakeOffset.animateTo(-10f, tween(40))
-            shakeOffset.animateTo(7f, tween(40))
-            shakeOffset.animateTo(-7f, tween(40))
-            shakeOffset.animateTo(4f, tween(40))
-            shakeOffset.animateTo(-4f, tween(40))
-            shakeOffset.animateTo(0f, tween(40))
+            listOf(10f, -10f, 7f, -7f, 4f, -4f, 0f).forEach { shakeOffset.animateTo(it, tween(40)) }
         }
     }
 
-    CommonCard(
-        Modifier.fillMaxWidth().offset(x = shakeOffset.value.dp),
-        shape = RoundedCornerShape(16.dp),
-    ) {
+    CommonCard(Modifier.fillMaxWidth().offset(x = shakeOffset.value.dp), shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.padding(24.dp)) {
-            // Lock icon
-            Surface(
-                shape = CircleShape,
-                color = Indigo,
-                modifier = Modifier.size(48.dp).align(Alignment.CenterHorizontally),
-            ) {
+            Surface(shape = CircleShape, color = Indigo, modifier = Modifier.size(48.dp).align(Alignment.CenterHorizontally)) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Filled.Lock,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp),
-                    )
+                    Icon(Icons.Filled.Lock, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                "解锁密码箱",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
+            Text("解锁密码箱", style = MaterialTheme.typography.titleLarge, modifier = Modifier.align(Alignment.CenterHorizontally))
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "您的密码已加密存储在本地",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
+            Text("您的密码已加密存储在本地", style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.align(Alignment.CenterHorizontally))
             Spacer(modifier = Modifier.height(20.dp))
-            PasswordField(
-                value = pw,
-                label = "主密码",
-                onValueChange = { pw = it },
-                isError = error != null,
-            )
+            PasswordField(value = pw, label = "主密码", onValueChange = { pw = it }, isError = error != null)
             if (error != null) {
                 Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    error!!,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(modifier = Modifier.height(20.dp))
-            CommonButton(
-                text = "解锁",
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { if (!viewModel.unlock(pw)) error = "密码错误" },
-            )
+            CommonButton(text = "解锁", modifier = Modifier.fillMaxWidth(), onClick = {
+                if (!viewModel.unlock(pw)) error = "密码错误"
+            })
             if (authManager.isAvailable) {
                 Spacer(modifier = Modifier.height(12.dp))
-                TextButton(
-                    onClick = {
-                        authManager.authenticate(
-                            title = "解锁密码箱",
-                            subtitle = "验证指纹以解锁",
-                            onSuccess = { viewModel.unlockWithBiometric() },
-                            onError = { error = it },
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Icon(
-                        Icons.Filled.Fingerprint,
-                        contentDescription = null,
-                        tint = Indigo,
-                        modifier = Modifier.size(18.dp),
-                    )
+                TextButton(onClick = {
+                    authManager.authenticate(title = "解锁密码箱", subtitle = "验证指纹以解锁",
+                        onSuccess = { viewModel.unlockWithBiometric() }, onError = { error = it })
+                }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Filled.Fingerprint, contentDescription = null, tint = Indigo, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        "使用指纹解锁",
-                        color = Indigo,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                    Text("使用指纹解锁", color = Indigo, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
@@ -283,18 +241,13 @@ private fun UnlockCard(viewModel: PasswordViewModel, authManager: BiometricAuthM
 }
 
 @Composable
-private fun PasswordList(viewModel: PasswordViewModel) {
+private fun PasswordList(viewModel: PasswordViewModel, onEdit: (PasswordEntity) -> Unit, onDelete: (PasswordEntity) -> Unit) {
     val items by viewModel.items.collectAsState()
     var query by remember { mutableStateOf("") }
     val revealed = remember { mutableStateListOf<Long>() }
 
-    val filtered = if (query.isBlank()) {
-        items
-    } else {
-        items.filter {
-            it.site.contains(query, true) || it.account.contains(query, true) || it.tag.contains(query, true)
-        }
-    }
+    val filtered = if (query.isBlank()) items
+    else items.filter { it.site.contains(query, true) || it.account.contains(query, true) || it.tag.contains(query, true) }
 
     Spacer(modifier = Modifier.height(16.dp))
     CommonTextField(value = query, onValueChange = { query = it }, label = "搜索", placeholder = "站点 / 账号 / 标签")
@@ -303,11 +256,11 @@ private fun PasswordList(viewModel: PasswordViewModel) {
     Spacer(modifier = Modifier.height(12.dp))
 
     if (filtered.isEmpty()) {
-        Text(
-            "暂无密码，点右下角添加",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp)) {
+            Icon(Icons.Filled.Lock, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("暂无密码，点右下角添加", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+        }
     } else {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(filtered, key = { it.id }) { entity ->
@@ -318,7 +271,8 @@ private fun PasswordList(viewModel: PasswordViewModel) {
                         if (revealed.contains(entity.id)) revealed.remove(entity.id) else revealed.add(entity.id)
                     },
                     onToggleFavorite = { viewModel.toggleFavorite(entity) },
-                    onDelete = { viewModel.delete(entity) },
+                    onDelete = { onDelete(entity) },
+                    onEdit = { onEdit(entity) },
                     password = viewModel.decrypt(entity),
                 )
             }
@@ -333,6 +287,7 @@ private fun PasswordItemCard(
     onToggleReveal: () -> Unit,
     onToggleFavorite: () -> Unit,
     onDelete: () -> Unit,
+    onEdit: () -> Unit,
     password: String,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -343,32 +298,24 @@ private fun PasswordItemCard(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(entity.account, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    if (revealed) password else "•".repeat(minOf(password.length, 12).coerceAtLeast(6)),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontFamily = FontFamily.Monospace,
-                )
+                Text(if (revealed) password else "•".repeat(minOf(password.length, 12).coerceAtLeast(6)),
+                    style = MaterialTheme.typography.bodyLarge, fontFamily = FontFamily.Monospace)
             }
             IconButton(onClick = onToggleFavorite) {
-                Icon(
-                    if (entity.isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
+                Icon(if (entity.isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
                     contentDescription = "收藏",
-                    tint = if (entity.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                    tint = if (entity.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
             IconButton(onClick = onToggleReveal) {
                 Icon(if (revealed) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, contentDescription = "显示密码")
             }
             Box {
-                IconButton(onClick = { menuExpanded = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = "更多")
-                }
+                IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "更多") }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    DropdownMenuItem(
-                        text = { Text("删除") },
-                        leadingIcon = { Icon(Icons.Filled.Delete, null) },
-                        onClick = { onDelete(); menuExpanded = false },
-                    )
+                    DropdownMenuItem(text = { Text("编辑") }, leadingIcon = { Icon(Icons.Filled.Edit, null) },
+                        onClick = { onEdit(); menuExpanded = false })
+                    DropdownMenuItem(text = { Text("删除") }, leadingIcon = { Icon(Icons.Filled.Delete, null) },
+                        onClick = { onDelete(); menuExpanded = false })
                 }
             }
         }
@@ -378,31 +325,70 @@ private fun PasswordItemCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddPasswordDialog(onDismiss: () -> Unit, onConfirm: (PasswordInput) -> Unit) {
-    var site by remember { mutableStateOf("") }
-    var account by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
-    var tag by remember { mutableStateOf("") }
-    var favorite by remember { mutableStateOf(false) }
+    PasswordFormDialog(title = "新增密码", onDismiss = onDismiss, onConfirm = onConfirm)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditPasswordDialog(
+    entity: PasswordEntity,
+    password: String,
+    onDismiss: () -> Unit,
+    onConfirm: (PasswordInput) -> Unit,
+) {
+    PasswordFormDialog(
+        title = "编辑密码",
+        initialSite = entity.site,
+        initialAccount = entity.account,
+        initialPassword = password,
+        initialNote = entity.note,
+        initialTag = entity.tag,
+        initialFavorite = entity.isFavorite,
+        onDismiss = onDismiss,
+        onConfirm = onConfirm,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PasswordFormDialog(
+    title: String,
+    initialSite: String = "",
+    initialAccount: String = "",
+    initialPassword: String = "",
+    initialNote: String = "",
+    initialTag: String = "",
+    initialFavorite: Boolean = false,
+    onDismiss: () -> Unit,
+    onConfirm: (PasswordInput) -> Unit,
+) {
+    var site by remember { mutableStateOf(initialSite) }
+    var account by remember { mutableStateOf(initialAccount) }
+    var password by remember { mutableStateOf(initialPassword) }
+    var note by remember { mutableStateOf(initialNote) }
+    var tag by remember { mutableStateOf(initialTag) }
+    var favorite by remember { mutableStateOf(initialFavorite) }
     var showPw by remember { mutableStateOf(false) }
+    val isEdit = initialPassword.isNotEmpty()
+    val canSave = site.isNotBlank() && (isEdit || password.isNotBlank())
 
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            Button(enabled = site.isNotBlank() && password.isNotBlank(), onClick = {
+            Button(enabled = canSave, onClick = {
                 onConfirm(PasswordInput(site, account, password, note, tag, favorite))
             }) { Text("保存") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("新增密码", style = MaterialTheme.typography.titleLarge)
+                Text(title, style = MaterialTheme.typography.titleLarge)
                 OutlinedTextField(value = site, onValueChange = { site = it }, label = { Text("网站 / 名称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(value = account, onValueChange = { account = it }, label = { Text("账号") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("密码") },
+                    label = { Text(if (isEdit) "密码（留空不修改）" else "密码") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     visualTransformation = if (showPw) VisualTransformation.None else PasswordVisualTransformation(),

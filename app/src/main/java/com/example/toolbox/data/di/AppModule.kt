@@ -11,6 +11,7 @@ import com.example.toolbox.data.local.dao.CountdownDao
 import com.example.toolbox.data.local.dao.CurrencyRateDao
 import com.example.toolbox.data.local.dao.PasswordDao
 import com.example.toolbox.data.local.datastore.IpCacheDataStore
+import com.example.toolbox.data.local.datastore.PeriodDataStore
 import com.example.toolbox.data.local.datastore.SettingsDataStore
 import com.example.toolbox.data.remote.ExchangeRateApi
 import com.example.toolbox.data.remote.IpApi
@@ -44,6 +45,10 @@ object AppModule {
     @Provides @Singleton @Named("ipCache")
     fun provideIpCacheStore(@ApplicationContext context: Context): DataStore<Preferences> =
         PreferenceDataStoreFactory.create(produceFile = { context.preferencesDataStoreFile("ip_cache") })
+
+    @Provides @Singleton @Named("period")
+    fun providePeriodStore(@ApplicationContext context: Context): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create(produceFile = { context.preferencesDataStoreFile("period") })
 
     @Provides @Singleton
     fun provideExchangeApi(): ExchangeRateApi =
@@ -110,4 +115,10 @@ object AppModule {
         api: IpApi,
         cache: IpCacheDataStore,
     ): IpRepository = IpRepository(api, cache)
+
+    @Provides @Singleton
+    fun providePeriodDataStore(
+        @Named("period") ds: DataStore<Preferences>,
+        gson: Gson,
+    ): PeriodDataStore = PeriodDataStore(ds, gson)
 }

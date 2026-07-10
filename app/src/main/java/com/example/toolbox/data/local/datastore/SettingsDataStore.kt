@@ -48,9 +48,26 @@ class SettingsDataStore @Inject constructor(
         dataStore.edit { it[MASTER_HASH_KEY] = hash }
     }
 
+    // ---- Favorite tools ----
+    val favoriteTools: Flow<Set<String>> = dataStore.data.map { prefs ->
+        (prefs[FAVORITE_KEY] ?: "").split(',').filter { it.isNotBlank() }.toSet()
+    }
+
+    suspend fun toggleFavorite(toolId: String) {
+        dataStore.edit { prefs ->
+            val set = (prefs[FAVORITE_KEY] ?: "")
+                .split(',')
+                .filter { it.isNotBlank() }
+                .toMutableSet()
+            if (set.contains(toolId)) set.remove(toolId) else set.add(toolId)
+            prefs[FAVORITE_KEY] = set.joinToString(",")
+        }
+    }
+
     companion object {
         val THEME_KEY = intPreferencesKey("theme_mode")
         val RECENT_KEY = stringPreferencesKey("recent_tools")
         val MASTER_HASH_KEY = stringPreferencesKey("master_hash")
+        val FAVORITE_KEY = stringPreferencesKey("favorite_tools")
     }
 }

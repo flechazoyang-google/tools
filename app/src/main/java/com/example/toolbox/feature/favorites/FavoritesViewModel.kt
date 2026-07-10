@@ -1,4 +1,4 @@
-package com.example.toolbox.feature.tools
+package com.example.toolbox.feature.favorites
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ToolsViewModel @Inject constructor(
+class FavoritesViewModel @Inject constructor(
     private val settings: SettingsDataStore,
 ) : ViewModel() {
 
@@ -21,11 +21,11 @@ class ToolsViewModel @Inject constructor(
         emptySet(),
     )
 
-    fun openTool(id: String) {
-        viewModelScope.launch { settings.pushRecent(id) }
-    }
-
     fun toggleFavorite(id: String) {
         viewModelScope.launch { settings.toggleFavorite(id) }
+    }
+
+    fun openTool(id: String) {
+        viewModelScope.launch { settings.pushRecent(id) }
     }
 }

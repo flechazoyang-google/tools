@@ -21,7 +21,17 @@ class HomeViewModel @Inject constructor(
         emptyList(),
     )
 
+    val favoriteTools: StateFlow<Set<String>> = settings.favoriteTools.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        emptySet(),
+    )
+
     fun openTool(id: String) {
         viewModelScope.launch { settings.pushRecent(id) }
+    }
+
+    fun toggleFavorite(id: String) {
+        viewModelScope.launch { settings.toggleFavorite(id) }
     }
 }

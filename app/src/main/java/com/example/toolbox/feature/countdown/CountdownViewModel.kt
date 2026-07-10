@@ -32,4 +32,10 @@ class CountdownViewModel @Inject constructor(
     fun togglePin(entity: CountdownEntity) {
         viewModelScope.launch { repo.togglePin(entity) }
     }
+
+    fun update(entity: CountdownEntity, title: String, targetDate: Long, colorTag: String, type: String) {
+        viewModelScope.launch {
+            repo.update(entity.copy(title = title, targetDate = targetDate, colorTag = colorTag, type = type))
+        }
+    }
 }
