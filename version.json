@@ -1,7 +1,7 @@
 {
-  "versionCode": 15,
-  "versionName": "1.4.2",
-  "downloadUrl": "https://gitee.com/yang-genhao/tools/releases/download/v1.4.2/toolbox-1.4.2.apk",
-  "downloadUrlFallback": "https://github.com/flechazoyang-google/tools/releases/download/v1.4.2/toolbox-1.4.2.apk",
-  "releaseNotes": "- 🐛 修复密码箱解锁无反应（unlockedUntilMs 不可观测）\n- 🐛 修复 API 24-25 设备振动崩溃（VibrationEffect 回退）\n- 🐛 修复倒数日文本"已经"→"还有"\n- 🐛 修复编辑倒数日时日期选择器数据陈旧\n- 🐛 修复密钥库初始化异常未捕获导致启动崩溃\n- ✨ 列表增删重排动画（animateItem）\n- ✨ 按钮按压缩放反馈、导航图标渐变\n- ✨ 搜索清除按钮缩放+淡入淡出动画\n- 🎨 首页收藏入口始终可见（isNotEmpty 替代 >3）\n- 🎨 Theme.kt 引用规范化"
+  "versionCode": 16,
+  "versionName": "1.4.3",
+  "downloadUrl": "https://gitee.com/yang-genhao/tools/releases/download/v1.4.3/toolbox-1.4.3.apk",
+  "downloadUrlFallback": "https://github.com/flechazoyang-google/tools/releases/download/v1.4.3/toolbox-1.4.3.apk",
+  "releaseNotes": "✨ 首页新增「我的收藏」快捷入口芯片，点击直达收藏页"
 }

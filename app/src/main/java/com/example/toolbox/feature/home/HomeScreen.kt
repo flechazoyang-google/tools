@@ -134,6 +134,11 @@ fun HomeScreen(
                         )
                     }
                 }
+                item {
+                    Box(Modifier.animateItem()) {
+                        FavoritesEntryChip(onClick = { navController.navigate("favorites") })
+                    }
+                }
             }
         }
 
@@ -177,6 +182,27 @@ private fun FavoriteToolChip(tool: Tool, onClick: () -> Unit, onToggleFavorite: 
             IconButton(onClick = { triggerVibration(context); onToggleFavorite() }, modifier = Modifier.size(32.dp)) {
                 Icon(Icons.Filled.Star, "取消收藏", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
             }
+        }
+    }
+}
+
+@Composable
+private fun FavoritesEntryChip(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+        modifier = Modifier.height(34.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Filled.Star, "收藏", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(6.dp))
+            Text("我的收藏", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(Icons.Filled.ChevronRight, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
         }
     }
 }

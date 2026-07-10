@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.toolbox"
         minSdk = 24
         targetSdk = 34
-        versionCode = 15
-        versionName = "1.4.2"
+        versionCode = 16
+        versionName = "1.4.3"
     }
 
     buildTypes {
