@@ -45,7 +45,6 @@ fun HomeScreen(
     navController: NavHostController,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
-    val context = LocalContext.current
     val recentIds by viewModel.recentTools.collectAsState()
     val favoriteIds by viewModel.favoriteTools.collectAsState()
     val featured = remember { ToolRegistry.featuredTools.take(6) }
@@ -157,6 +156,7 @@ private fun SeeAllButton(onClick: () -> Unit) {
 
 @Composable
 private fun FavoriteToolChip(tool: Tool, onClick: () -> Unit, onToggleFavorite: () -> Unit) {
+    val context = LocalContext.current
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(10.dp),
