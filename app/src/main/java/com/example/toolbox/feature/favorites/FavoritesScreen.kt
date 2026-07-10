@@ -28,6 +28,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import com.example.toolbox.core.util.triggerVibration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.toolbox.core.components.CommonCard
@@ -39,6 +41,7 @@ fun FavoritesScreen(
     navController: NavHostController,
     viewModel: FavoritesViewModel = hiltViewModel(),
 ) {
+    val context = LocalContext.current
     val favoriteIds by viewModel.favoriteTools.collectAsState()
     val tools = remember(favoriteIds) {
         ToolRegistry.tools.filter { it.id in favoriteIds }
@@ -78,7 +81,7 @@ fun FavoritesScreen(
                                 restoreState = true
                             }
                         },
-                        modifier = Modifier.fillMaxWidth().height(64.dp),
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
                     ) {
                         Row(
                             modifier = Modifier.fillMaxSize().padding(start = 12.dp),
@@ -99,7 +102,7 @@ fun FavoritesScreen(
                                 Text(tool.description, style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            IconButton(onClick = { viewModel.toggleFavorite(tool.id) }) {
+                            IconButton(onClick = { triggerVibration(context); viewModel.toggleFavorite(tool.id) }) {
                                 Icon(Icons.Filled.Star, "取消收藏", tint = MaterialTheme.colorScheme.primary)
                             }
                         }

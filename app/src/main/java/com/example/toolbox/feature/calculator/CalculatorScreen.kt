@@ -21,6 +21,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,7 +35,7 @@ import com.example.toolbox.core.util.triggerVibration
 
 @Composable
 fun CalculatorScreen() {
-    var expression by remember { mutableStateOf("") }
+    var expression by rememberSaveable { mutableStateOf("") }
     val result by remember(expression) {
         derivedStateOf { CalculatorEngine.evaluate(expression) }
     }

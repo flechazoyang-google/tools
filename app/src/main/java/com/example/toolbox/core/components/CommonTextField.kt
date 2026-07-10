@@ -9,6 +9,8 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
@@ -25,6 +27,9 @@ fun CommonTextField(
     singleLine: Boolean = true,
     trailingIcon: @Composable (() -> Unit)? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    imeAction: ImeAction = ImeAction.Next,
+    onImeAction: () -> Unit = {},
 ) {
     OutlinedTextField(
         value = value,
@@ -36,6 +41,16 @@ fun CommonTextField(
         shape = RoundedCornerShape(16.dp),
         trailingIcon = trailingIcon,
         visualTransformation = visualTransformation,
+        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = imeAction,
+        ),
+        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+            onDone = { onImeAction() },
+            onSearch = { onImeAction() },
+            onNext = { onImeAction() },
+            onGo = { onImeAction() },
+        ),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,

@@ -38,11 +38,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -56,9 +62,10 @@ fun ToolsScreen(
     navController: NavHostController,
     viewModel: ToolsViewModel = hiltViewModel(),
 ) {
+    val focusRequester = remember { FocusRequester() }
     var selectedCategory by remember { mutableStateOf<ToolCategory?>(null) }
     var slideDirection by remember { mutableStateOf(0) }
-    var searchQuery by remember { mutableStateOf("") }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     val allTools = ToolRegistry.tools
     val favoriteIds by viewModel.favoriteTools.collectAsState()
 
@@ -101,9 +108,11 @@ fun ToolsScreen(
                 Icon(Icons.Filled.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 8.dp).size(20.dp))
                 OutlinedTextField(value = searchQuery, onValueChange = { searchQuery = it },
                     placeholder = { Text("搜索工具…", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
-                    singleLine = true, modifier = Modifier.weight(1f),
+                    singleLine = true, modifier = Modifier.weight(1f).focusRequester(focusRequester),
                     colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = androidx.compose.ui.graphics.Color.Transparent, unfocusedBorderColor = androidx.compose.ui.graphics.Color.Transparent, focusedContainerColor = androidx.compose.ui.graphics.Color.Transparent, unfocusedContainerColor = androidx.compose.ui.graphics.Color.Transparent),
-                    textStyle = MaterialTheme.typography.bodyMedium)
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { focusRequester.freeFocus() }))
                 if (searchQuery.isNotEmpty()) {
                     IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(32.dp)) { Icon(Icons.Filled.Close, contentDescription = "清除", modifier = Modifier.size(16.dp)) }
                 }
@@ -159,7 +168,7 @@ fun ToolsScreen(
 private fun CategoryTab(label: String, count: Int, selected: Boolean, onClick: () -> Unit, color: androidx.compose.ui.graphics.Color? = null) {
     Surface(onClick = onClick, shape = RoundedCornerShape(10.dp),
         color = if (selected) (color ?: MaterialTheme.colorScheme.primaryContainer).copy(alpha = 0.25f) else MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.height(32.dp)) {
+        modifier = Modifier.height(40.dp)) {
         Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                 color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)

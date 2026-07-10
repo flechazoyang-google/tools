@@ -38,6 +38,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -55,10 +58,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import com.example.toolbox.core.util.BiometricAuthManager
+import com.example.toolbox.core.util.triggerVibration
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -239,20 +245,24 @@ private fun UnlockCard(viewModel: PasswordViewModel, authManager: BiometricAuthM
 private fun PasswordList(viewModel: PasswordViewModel, onEdit: (PasswordEntity) -> Unit, onDelete: (PasswordEntity) -> Unit) {
     val items by viewModel.items.collectAsState()
     var query by remember { mutableStateOf("") }
+    val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
     val revealed = remember { mutableStateListOf<Long>() }
 
     val filtered = if (query.isBlank()) items
     else items.filter { it.site.contains(query, true) || it.account.contains(query, true) || it.tag.contains(query, true) }
 
     Spacer(modifier = Modifier.height(16.dp))
-    CommonTextField(value = query, onValueChange = { query = it }, label = "搜索", placeholder = "站点 / 账号 / 标签")
+    CommonTextField(value = query, onValueChange = { query = it }, label = "搜索", placeholder = "站点 / 账号 / 标签",
+        imeAction = androidx.compose.ui.text.input.ImeAction.Search,
+    modifier = Modifier.focusRequester(focusRequester),
+        onImeAction = { focusRequester.freeFocus() })
     Spacer(modifier = Modifier.height(12.dp))
     SectionHeader("已保存 ${items.size} 条")
     Spacer(modifier = Modifier.height(12.dp))
 
     if (filtered.isEmpty()) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp)) {
-            Icon(Icons.Filled.Lock, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+            Icon(Icons.Filled.Lock, contentDescription = null, modifier = Modifier.size(56.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
             Spacer(modifier = Modifier.height(8.dp))
             Text("暂无密码，点右下角添加", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
         }
@@ -275,6 +285,7 @@ private fun PasswordList(viewModel: PasswordViewModel, onEdit: (PasswordEntity) 
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PasswordItemCard(
     entity: PasswordEntity,
@@ -285,8 +296,37 @@ private fun PasswordItemCard(
     onEdit: () -> Unit,
     password: String,
 ) {
+    val context = LocalContext.current
     var menuExpanded by remember { mutableStateOf(false) }
-    CommonCard(Modifier.fillMaxWidth()) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { dismissValue ->
+            if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
+                onDelete()
+                true
+            } else false
+        },
+    )
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFFF4444), RoundedCornerShape(16.dp))
+                    .padding(end = 20.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "删除",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+        },
+    ) {
+        CommonCard(Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(entity.site.ifBlank { "未命名" }, style = MaterialTheme.typography.titleMedium)
@@ -296,7 +336,7 @@ private fun PasswordItemCard(
                 Text(if (revealed) password else "•".repeat(minOf(password.length, 12).coerceAtLeast(6)),
                     style = MaterialTheme.typography.bodyLarge, fontFamily = FontFamily.Monospace)
             }
-            IconButton(onClick = onToggleFavorite) {
+            IconButton(onClick = { triggerVibration(context); onToggleFavorite() }) {
                 Icon(if (entity.isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
                     contentDescription = "收藏",
                     tint = if (entity.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
@@ -310,10 +350,11 @@ private fun PasswordItemCard(
                     DropdownMenuItem(text = { Text("编辑") }, leadingIcon = { Icon(Icons.Filled.Edit, null) },
                         onClick = { onEdit(); menuExpanded = false })
                     DropdownMenuItem(text = { Text("删除") }, leadingIcon = { Icon(Icons.Filled.Delete, null) },
-                        onClick = { onDelete(); menuExpanded = false })
+                        onClick = { triggerVibration(context, 10); onDelete(); menuExpanded = false })
                 }
             }
         }
+    }
     }
 }
 

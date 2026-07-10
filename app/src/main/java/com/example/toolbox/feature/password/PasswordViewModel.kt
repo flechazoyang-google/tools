@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.toolbox.core.util.SnackbarEventBus
 import com.example.toolbox.core.util.sha256
 import com.example.toolbox.data.local.datastore.SettingsDataStore
 import com.example.toolbox.data.local.entity.PasswordEntity
@@ -18,12 +19,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val SESSION_DURATION_MS = 5 * 60 * 1000L // 5 分钟
+private const val SESSION_DURATION_MS = 5 * 60 * 1000L
 
 @HiltViewModel
 class PasswordViewModel @Inject constructor(
     private val repo: PasswordRepository,
     private val settings: SettingsDataStore,
+    private val eventBus: SnackbarEventBus,
 ) : ViewModel() {
 
     val items: StateFlow<List<PasswordEntity>> = repo.observeAll()
@@ -34,18 +36,15 @@ class PasswordViewModel @Inject constructor(
 
     private var unlockedUntilMs = 0L
 
-    /** True if unlocked and session has not expired. */
     val unlocked: Boolean
         get() = System.currentTimeMillis() < unlockedUntilMs
 
-    /** Remaining session time in seconds (0 if locked/expired). */
     val sessionTimeLeftSec: Int
         get() {
             val left = unlockedUntilMs - System.currentTimeMillis()
             return (left / 1000).toInt().coerceAtLeast(0)
         }
 
-    /** True when no master password has been set yet. */
     val needsSetup: Boolean
         get() = masterHash.value == null
 
@@ -62,7 +61,6 @@ class PasswordViewModel @Inject constructor(
         return ok
     }
 
-    /** Unlock via biometric authentication — skips master password check. */
     fun unlockWithBiometric() {
         extendSession()
     }
@@ -75,12 +73,21 @@ class PasswordViewModel @Inject constructor(
         unlockedUntilMs = System.currentTimeMillis() + SESSION_DURATION_MS
     }
 
-    fun add(input: PasswordInput) = viewModelScope.launch { repo.add(input) }
+    fun add(input: PasswordInput) = viewModelScope.launch {
+        repo.add(input)
+        eventBus.send("已添加密码")
+    }
 
-    fun delete(entity: PasswordEntity) = viewModelScope.launch { repo.delete(entity) }
+    fun delete(entity: PasswordEntity) = viewModelScope.launch {
+        repo.delete(entity)
+        val name = entity.site.ifBlank { "未命名" }
+        eventBus.send("已删除「${name}」")
+    }
 
     fun toggleFavorite(entity: PasswordEntity) = viewModelScope.launch {
-        repo.update(entity.copy(isFavorite = !entity.isFavorite))
+        val wasFav = entity.isFavorite
+        repo.update(entity.copy(isFavorite = !wasFav))
+        eventBus.send(if (wasFav) "已取消收藏" else "已收藏")
     }
 
     fun decrypt(entity: PasswordEntity): String = repo.decrypt(entity.encryptedPassword)
@@ -99,6 +106,7 @@ class PasswordViewModel @Inject constructor(
             } else {
                 repo.update(updated)
             }
+            eventBus.send("已更新密码")
         }
     }
 }

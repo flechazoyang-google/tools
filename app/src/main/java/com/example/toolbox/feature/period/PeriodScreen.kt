@@ -302,7 +302,7 @@ private fun CalendarGrid(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(32.dp)
+                                        .size(40.dp)
                                         .then(
                                             if (isPeriod) Modifier
                                                 .clip(CircleShape)

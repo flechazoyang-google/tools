@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.toolbox.BuildConfig
+import com.example.toolbox.core.components.TopBar
 import com.example.toolbox.core.theme.ThemeMode
 import kotlinx.coroutines.launch
 
@@ -75,6 +76,7 @@ fun SettingsScreen(
     }
 
     Scaffold(
+        topBar = { TopBar(title = "设置") },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { inner ->
         Column(
@@ -84,14 +86,6 @@ fun SettingsScreen(
                 .padding(inner)
                 .padding(horizontal = 16.dp),
         ) {
-            // ── Page title ──
-            Text(
-                "设置",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 24.dp),
-            )
-
             // ── 外观 ──
             Spacer(modifier = Modifier.height(24.dp))
             Text(
@@ -101,7 +95,7 @@ fun SettingsScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Card(
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier.fillMaxWidth(),
@@ -146,7 +140,7 @@ fun SettingsScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Card(
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier.fillMaxWidth(),
@@ -190,7 +184,7 @@ fun SettingsScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Card(
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier.fillMaxWidth(),
@@ -226,7 +220,7 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(16.dp),
             ) {
                 Text(
                     "检查更新",

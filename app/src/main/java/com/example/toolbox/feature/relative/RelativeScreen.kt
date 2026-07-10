@@ -253,7 +253,7 @@ private fun RelationButton(label: String, subtitle: String, onClick: () -> Unit,
             contentColor = MaterialTheme.colorScheme.onSurface,
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
-        modifier = modifier.height(64.dp),
+        modifier = modifier.height(56.dp),
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)

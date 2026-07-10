@@ -35,6 +35,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -51,12 +54,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.toolbox.core.components.CommonCard
 import com.example.toolbox.core.components.TopBar
+import com.example.toolbox.core.util.triggerVibration
 import com.example.toolbox.core.util.daysUntil
 import com.example.toolbox.core.util.formatDate
 import com.example.toolbox.core.util.startOfToday
@@ -169,10 +174,20 @@ fun CountdownScreen(viewModel: CountdownViewModel = hiltViewModel()) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CountdownCard(entity: CountdownEntity, onDelete: () -> Unit, onPin: () -> Unit, onEdit: () -> Unit) {
+    val context = LocalContext.current
     val color = runCatching { Color(android.graphics.Color.parseColor(entity.colorTag)) }.getOrDefault(MaterialTheme.colorScheme.primary)
     var menuExpanded by remember { mutableStateOf(false) }
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { dismissValue ->
+            if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
+                onDelete()
+                true
+            } else false
+        },
+    )
 
     val days = when (entity.type) {
         "anniversary" -> daysSince(entity.targetDate)
@@ -188,8 +203,28 @@ private fun CountdownCard(entity: CountdownEntity, onDelete: () -> Unit, onPin: 
         else -> "已过期" to ""
     }
 
-    CommonCard(Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth()) {
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFFF4444), RoundedCornerShape(16.dp))
+                    .padding(end = 20.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "删除",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+        },
+    ) {
+        CommonCard(Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxWidth()) {
             Box(modifier = Modifier.width(6.dp).fillMaxSize().clip(RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp)).background(color))
             Column(modifier = Modifier.weight(1f).padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -200,7 +235,7 @@ private fun CountdownCard(entity: CountdownEntity, onDelete: () -> Unit, onPin: 
                         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                             DropdownMenuItem(text = { Text(if (entity.isPinned) "取消置顶" else "置顶") }, onClick = { onPin(); menuExpanded = false })
                             DropdownMenuItem(text = { Text("编辑") }, leadingIcon = { Icon(Icons.Filled.Edit, null) }, onClick = { onEdit(); menuExpanded = false })
-                            DropdownMenuItem(text = { Text("删除") }, onClick = { onDelete(); menuExpanded = false })
+                            DropdownMenuItem(text = { Text("删除") }, onClick = { triggerVibration(context, 10); onDelete(); menuExpanded = false })
                         }
                     }
                 }
@@ -217,6 +252,7 @@ private fun CountdownCard(entity: CountdownEntity, onDelete: () -> Unit, onPin: 
                 }
             }
         }
+    }
     }
 }
 

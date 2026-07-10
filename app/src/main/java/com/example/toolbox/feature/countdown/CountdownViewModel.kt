@@ -2,6 +2,7 @@ package com.example.toolbox.feature.countdown
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.toolbox.core.util.SnackbarEventBus
 import com.example.toolbox.data.local.entity.CountdownEntity
 import com.example.toolbox.data.repository.CountdownRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,6 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CountdownViewModel @Inject constructor(
     private val repo: CountdownRepository,
+    private val eventBus: SnackbarEventBus,
 ) : ViewModel() {
 
     val items: StateFlow<List<CountdownEntity>> = repo.observeAll()
@@ -22,20 +24,28 @@ class CountdownViewModel @Inject constructor(
     fun add(title: String, targetDate: Long, colorTag: String, type: String = "countdown") {
         viewModelScope.launch {
             repo.add(CountdownEntity(title = title, targetDate = targetDate, colorTag = colorTag, type = type))
+            eventBus.send("已添加「${title}」")
         }
     }
 
     fun delete(entity: CountdownEntity) {
-        viewModelScope.launch { repo.delete(entity) }
+        viewModelScope.launch {
+            repo.delete(entity)
+            eventBus.send("已删除「${entity.title}」")
+        }
     }
 
     fun togglePin(entity: CountdownEntity) {
-        viewModelScope.launch { repo.togglePin(entity) }
+        viewModelScope.launch {
+            repo.togglePin(entity)
+            eventBus.send(if (entity.isPinned) "已取消置顶" else "已置顶")
+        }
     }
 
     fun update(entity: CountdownEntity, title: String, targetDate: Long, colorTag: String, type: String) {
         viewModelScope.launch {
             repo.update(entity.copy(title = title, targetDate = targetDate, colorTag = colorTag, type = type))
+            eventBus.send("已更新事件")
         }
     }
 }

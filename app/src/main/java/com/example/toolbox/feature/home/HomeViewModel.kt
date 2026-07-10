@@ -2,6 +2,7 @@ package com.example.toolbox.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.toolbox.core.util.SnackbarEventBus
 import com.example.toolbox.data.local.datastore.SettingsDataStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -13,6 +14,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val settings: SettingsDataStore,
+    private val eventBus: SnackbarEventBus,
 ) : ViewModel() {
 
     val recentTools: StateFlow<List<String>> = settings.recentTools.stateIn(
@@ -32,6 +34,10 @@ class HomeViewModel @Inject constructor(
     }
 
     fun toggleFavorite(id: String) {
-        viewModelScope.launch { settings.toggleFavorite(id) }
+        viewModelScope.launch {
+            val wasFav = id in favoriteTools.value
+            settings.toggleFavorite(id)
+            eventBus.send(if (wasFav) "已取消收藏" else "已收藏")
+        }
     }
 }

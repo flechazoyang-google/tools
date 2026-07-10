@@ -31,6 +31,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import com.example.toolbox.core.util.triggerVibration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.toolbox.core.components.CommonCard
@@ -43,6 +45,7 @@ fun HomeScreen(
     navController: NavHostController,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
+    val context = LocalContext.current
     val recentIds by viewModel.recentTools.collectAsState()
     val favoriteIds by viewModel.favoriteTools.collectAsState()
     val featured = remember { ToolRegistry.featuredTools.take(6) }
@@ -167,7 +170,7 @@ private fun FavoriteToolChip(tool: Tool, onClick: () -> Unit, onToggleFavorite: 
             Icon(tool.icon, tool.title, tint = tool.category.color, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(tool.title, style = MaterialTheme.typography.labelLarge, maxLines = 1)
-            IconButton(onClick = onToggleFavorite, modifier = Modifier.size(32.dp)) {
+            IconButton(onClick = { triggerVibration(context); onToggleFavorite() }, modifier = Modifier.size(32.dp)) {
                 Icon(Icons.Filled.Star, "取消收藏", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
             }
         }
