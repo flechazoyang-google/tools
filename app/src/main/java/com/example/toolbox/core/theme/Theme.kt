@@ -1,5 +1,6 @@
 package com.example.toolbox.core.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -56,7 +57,7 @@ private val ToolboxShapes = Shapes(
 
 @Composable
 fun ToolboxTheme(
-    darkTheme: Boolean = androidx.compose.foundation.isSystemInDarkTheme(),
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
     MaterialTheme(

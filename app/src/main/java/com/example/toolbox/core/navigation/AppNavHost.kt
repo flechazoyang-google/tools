@@ -1,10 +1,13 @@
 package com.example.toolbox.core.navigation
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -100,13 +103,21 @@ fun ToolboxApp() {
                                 },
                                 icon = {
                                     Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            if (selected) item.selectedIcon else item.icon,
-                                            contentDescription = item.label,
-                                            modifier = Modifier.size(24.dp),
-                                            tint = if (selected) MaterialTheme.colorScheme.onSurface
-                                                   else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                        )
+                                        AnimatedContent(
+                                            targetState = selected,
+                                            transitionSpec = {
+                                                fadeIn(tween(200)) togetherWith fadeOut(tween(200))
+                                            },
+                                            label = "navIcon",
+                                        ) { isSelected ->
+                                            Icon(
+                                                if (isSelected) item.selectedIcon else item.icon,
+                                                contentDescription = item.label,
+                                                modifier = Modifier.size(24.dp),
+                                                tint = if (isSelected) MaterialTheme.colorScheme.onSurface
+                                                       else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                            )
+                                        }
                                     }
                                 },
                                 label = {

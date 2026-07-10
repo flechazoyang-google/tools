@@ -4,6 +4,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -113,7 +116,11 @@ fun ToolsScreen(
                     textStyle = MaterialTheme.typography.bodyMedium,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = { focusRequester.freeFocus() }))
-                if (searchQuery.isNotEmpty()) {
+                AnimatedVisibility(
+                    visible = searchQuery.isNotEmpty(),
+                    enter = fadeIn(tween(200)) + scaleIn(tween(200)),
+                    exit = fadeOut(tween(200)) + scaleOut(tween(200)),
+                ) {
                     IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(32.dp)) { Icon(Icons.Filled.Close, contentDescription = "清除", modifier = Modifier.size(16.dp)) }
                 }
             }

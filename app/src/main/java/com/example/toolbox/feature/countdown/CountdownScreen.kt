@@ -49,6 +49,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -135,12 +136,14 @@ fun CountdownScreen(viewModel: CountdownViewModel = hiltViewModel()) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(items, key = { it.id }) { entity ->
-                    CountdownCard(
-                        entity = entity,
-                        onDelete = { deleteTarget = entity },
-                        onPin = { viewModel.togglePin(entity) },
-                        onEdit = { editEntity = entity },
-                    )
+                    Box(Modifier.animateItem()) {
+                        CountdownCard(
+                            entity = entity,
+                            onDelete = { deleteTarget = entity },
+                            onPin = { viewModel.togglePin(entity) },
+                            onEdit = { editEntity = entity },
+                        )
+                    }
                 }
             }
         }
@@ -199,7 +202,7 @@ private fun CountdownCard(entity: CountdownEntity, onDelete: () -> Unit, onPin: 
         isBirthdayToday -> "${entity.title}生日快乐" to "🎂"
         entity.type == "anniversary" -> "${entity.title}已经 $days 天" to "🎉"
         entity.type == "birthday" -> "${entity.title}生日还有 $days 天" to "🎂"
-        days >= 0 -> "距离${entity.title}已经 $days 天" to ""
+        days >= 0 -> "距离${entity.title}还有 $days 天" to ""
         else -> "已过期" to ""
     }
 
@@ -269,15 +272,17 @@ private fun EditCountdownDialog(
     onDismiss: () -> Unit,
     onConfirm: (String, Long, String, String) -> Unit,
 ) {
-    CountdownFormDialog(
-        title = "编辑事件",
-        initialTitle = entity.title,
-        initialDate = entity.targetDate,
-        initialColor = entity.colorTag,
-        initialType = entity.type,
-        onDismiss = onDismiss,
-        onConfirm = onConfirm,
-    )
+    key(entity.id) {
+        CountdownFormDialog(
+            title = "编辑事件",
+            initialTitle = entity.title,
+            initialDate = entity.targetDate,
+            initialColor = entity.colorTag,
+            initialType = entity.type,
+            onDismiss = onDismiss,
+            onConfirm = onConfirm,
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

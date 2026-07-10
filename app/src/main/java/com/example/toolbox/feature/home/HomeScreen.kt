@@ -94,9 +94,11 @@ fun HomeScreen(
         } else {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(recentTools) { tool ->
-                    RecentToolChip(tool) {
-                        viewModel.openTool(tool.id)
-                        navController.navigate(tool.route)
+                    Box(Modifier.animateItem()) {
+                        RecentToolChip(tool) {
+                            viewModel.openTool(tool.id)
+                            navController.navigate(tool.route)
+                        }
                     }
                 }
             }
@@ -111,7 +113,7 @@ fun HomeScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SectionHeader("收藏工具")
-            if (favoriteTools.size > 3) {
+            if (favoriteTools.isNotEmpty()) {
                 SeeAllButton(onClick = { navController.navigate("favorites") })
             }
         }
@@ -124,11 +126,13 @@ fun HomeScreen(
         } else {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(favoriteTools.take(3)) { tool ->
-                    FavoriteToolChip(
-                        tool = tool,
-                        onClick = { viewModel.openTool(tool.id); navController.navigate(tool.route) },
-                        onToggleFavorite = { viewModel.toggleFavorite(tool.id) },
-                    )
+                    Box(Modifier.animateItem()) {
+                        FavoriteToolChip(
+                            tool = tool,
+                            onClick = { viewModel.openTool(tool.id); navController.navigate(tool.route) },
+                            onToggleFavorite = { viewModel.toggleFavorite(tool.id) },
+                        )
+                    }
                 }
             }
         }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import android.util.Log
 import androidx.security.crypto.MasterKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.security.KeyStore
@@ -25,9 +26,15 @@ class CryptoHelper @Inject constructor(@ApplicationContext private val context: 
     private val keyAlias: String = "toolbox_master_key"
 
     init {
-        MasterKey.Builder(context, keyAlias)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
+        try {
+            MasterKey.Builder(context, keyAlias)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+        } catch (e: Exception) {
+            // Key provisioning may fail on devices without hardware-backed keystore.
+            // getSecretKey() will attempt to generate the key at runtime as a fallback.
+            Log.e("CryptoHelper", "Failed to provision master key; will try runtime generation", e)
+        }
     }
 
     private val transformation = "AES/GCM/NoPadding"

@@ -34,7 +34,7 @@ class PasswordViewModel @Inject constructor(
     val masterHash: StateFlow<String?> = settings.masterHash
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    private var unlockedUntilMs = 0L
+    private var unlockedUntilMs by mutableStateOf(0L)
 
     val unlocked: Boolean
         get() = System.currentTimeMillis() < unlockedUntilMs

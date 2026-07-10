@@ -81,7 +81,7 @@ fun FavoritesScreen(
                                 restoreState = true
                             }
                         },
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        modifier = Modifier.animateItem().fillMaxWidth().height(56.dp),
                     ) {
                         Row(
                             modifier = Modifier.fillMaxSize().padding(start = 12.dp),

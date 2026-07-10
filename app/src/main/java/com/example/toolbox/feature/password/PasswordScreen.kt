@@ -269,7 +269,8 @@ private fun PasswordList(viewModel: PasswordViewModel, onEdit: (PasswordEntity) 
     } else {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(filtered, key = { it.id }) { entity ->
-                PasswordItemCard(
+                Box(Modifier.animateItem()) {
+                    PasswordItemCard(
                     entity = entity,
                     revealed = revealed.contains(entity.id),
                     onToggleReveal = {
@@ -280,6 +281,7 @@ private fun PasswordList(viewModel: PasswordViewModel, onEdit: (PasswordEntity) 
                     onEdit = { onEdit(entity) },
                     password = viewModel.decrypt(entity),
                 )
+                }
             }
         }
     }
