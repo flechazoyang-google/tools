@@ -1,12 +1,5 @@
 package com.example.toolbox.feature.tools
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -49,7 +42,6 @@ fun ToolsScreen(
     viewModel: ToolsViewModel = hiltViewModel(),
 ) {
     var selectedCategory by remember { mutableStateOf<ToolCategory?>(null) } // null = 全部
-    var slideDirection by remember { mutableStateOf(0) } // -1 左滑(下一个), 1 右滑(上一个), 0 点击切换
     val allTools = ToolRegistry.tools
 
     // 有效的分类列表：null（全部）+ 有工具的 category，用于左右滑动切换
@@ -57,10 +49,29 @@ fun ToolsScreen(
         listOf(null as ToolCategory?) +
             ToolCategory.entries.filter { cat -> allTools.any { it.category == cat } }
     }
+    val currentIdx = categories.indexOf(selectedCategory).coerceAtLeast(0)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .pointerInput(selectedCategory) {
+                val threshold = 50.dp.toPx()
+                var accumulated = 0f
+                detectHorizontalDragGestures(
+                    onDragEnd = { accumulated = 0f },
+                    onHorizontalDrag = { change, dragAmount ->
+                        change.consume()
+                        accumulated += dragAmount
+                        if (accumulated > threshold && currentIdx > 0) {
+                            accumulated = 0f
+                            selectedCategory = categories[currentIdx - 1]
+                        } else if (accumulated < -threshold && currentIdx < categories.size - 1) {
+                            accumulated = 0f
+                            selectedCategory = categories[currentIdx + 1]
+                        }
+                    },
+                )
+            }
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
@@ -74,7 +85,7 @@ fun ToolsScreen(
             CategoryTab(
                 label = "全部",
                 selected = selectedCategory == null,
-                onClick = { slideDirection = 0; selectedCategory = null },
+                onClick = { selectedCategory = null },
             )
             ToolCategory.entries.forEach { cat ->
                 val count = allTools.count { it.category == cat }
@@ -82,7 +93,7 @@ fun ToolsScreen(
                     CategoryTab(
                         label = cat.label,
                         selected = selectedCategory == cat,
-                        onClick = { slideDirection = 0; selectedCategory = cat },
+                        onClick = { selectedCategory = cat },
                     )
                 }
             }
@@ -90,78 +101,40 @@ fun ToolsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 左右滑动切换分类（带滑动动画）
-        val currentIdx = categories.indexOf(selectedCategory).coerceAtLeast(0)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .pointerInput(selectedCategory) {
-                    val threshold = 50.dp.toPx()
-                    var accumulated = 0f
-                    detectHorizontalDragGestures(
-                        onDragEnd = { accumulated = 0f },
-                        onHorizontalDrag = { change, dragAmount ->
-                            change.consume()
-                            accumulated += dragAmount
-                            if (accumulated > threshold && currentIdx > 0) {
-                                accumulated = 0f
-                                slideDirection = 1
-                                selectedCategory = categories[currentIdx - 1]
-                            } else if (accumulated < -threshold && currentIdx < categories.size - 1) {
-                                accumulated = 0f
-                                slideDirection = -1
-                                selectedCategory = categories[currentIdx + 1]
-                            }
-                        },
-                    )
-                },
-        ) {
-            AnimatedContent(
-                targetState = selectedCategory,
-                transitionSpec = {
-                    when (slideDirection) {
-                        1 -> (slideInHorizontally { -it } togetherWith slideOutHorizontally { it })
-                        -1 -> (slideInHorizontally { it } togetherWith slideOutHorizontally { -it })
-                        else -> (fadeIn() togetherWith fadeOut())
-                    }.using(SizeTransform(clip = false))
-                },
-                label = "categorySwipe",
-            ) { category ->
-                val filtered = if (category == null) allTools
-                    else allTools.filter { it.category == category }
+        // 当前分类的工具网格
+        val filtered = if (selectedCategory == null) allTools
+            else allTools.filter { it.category == selectedCategory }
 
-                if (filtered.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            "没有匹配的工具",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium,
+        if (filtered.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxWidth().height(200.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    "没有匹配的工具",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        } else {
+            val chunked = filtered.chunked(2)
+            chunked.forEach { rowItems ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.padding(bottom = 10.dp),
+                ) {
+                    rowItems.forEach { tool ->
+                        ToolGridCard(
+                            tool = tool,
+                            onClick = {
+                                viewModel.openTool(tool.id)
+                                navController.navigate(tool.route)
+                            },
+                            modifier = Modifier.weight(1f),
                         )
                     }
-                } else {
-                    val chunked = filtered.chunked(2)
-                    chunked.forEach { rowItems ->
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.padding(bottom = 10.dp),
-                        ) {
-                            rowItems.forEach { tool ->
-                                ToolGridCard(
-                                    tool = tool,
-                                    onClick = {
-                                        viewModel.openTool(tool.id)
-                                        navController.navigate(tool.route)
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                )
-                            }
-                            if (rowItems.size == 1) {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
-                        }
+                    if (rowItems.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }

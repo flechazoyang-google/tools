@@ -1,4 +1,4 @@
-# Toolbox v1.3.3 — 滑动动画 & 界面精简
+# Toolbox v1.3.4 — 设置页重设计 & 多项修复
 
 一款简约实用的 Android 工具箱应用，集成 11 种日常工具，基于 Kotlin + Jetpack Compose 构建。
 
@@ -38,4 +38,4 @@
 
 ## 📦 下载
 
-[toolbox-1.3.3.apk](releases/1.3/3/toolbox-1.3.3.apk)
+[toolbox-1.3.4.apk](releases/1.3/4/toolbox-1.3.4.apk)

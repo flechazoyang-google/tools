@@ -2,5 +2,5 @@
 <resources>
     <!-- Framework theme only used for the window background before Compose draws.
          Compose applies its own Material 3 theme at runtime. -->
-    <style name="Theme.Toolbox" parent="android:Theme.DeviceDefault.NoActionBar" />
+    <style name="Theme.Toolbox" parent="Theme.AppCompat.NoActionBar" />
 </resources>
