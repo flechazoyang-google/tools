@@ -1,7 +1,7 @@
 {
-  "versionCode": 12,
-  "versionName": "1.3.4",
-  "downloadUrl": "https://gitee.com/yang-genhao/tools/releases/download/v1.3.4/toolbox-1.3.4.apk",
-  "downloadUrlFallback": "https://github.com/flechazoyang-google/tools/releases/download/v1.3.4/toolbox-1.3.4.apk",
-  "releaseNotes": "- 设置页全面重设计：Group Card + ListItem 结构，页面更紧凑精致\n- 修复指纹解锁「当前上下文不支持生物识别」bug\n- 修复分类标签选中态背景色过淡\n- 删除首页搜索 UI"
+  "versionCode": 13,
+  "versionName": "1.4.0",
+  "downloadUrl": "https://gitee.com/yang-genhao/tools/releases/download/v1.4.0/toolbox-1.4.0.apk",
+  "downloadUrlFallback": "https://github.com/flechazoyang-google/tools/releases/download/v1.4.0/toolbox-1.4.0.apk",
+  "releaseNotes": "- ✨ 新增5个工具：二维码生成、亲戚称呼计算器、经期监控、去水印、加水印\n- ✨ 工具收藏系统：收藏工具到首页，支持独立收藏页\n- ✨ 密码箱会话超时机制：解锁后5分钟内无需重复解锁\n- ✨ 密码箱+倒数日 编辑功能\n- ✨ 删除确认弹窗：防止误删\n- ✨ 拼豆图纸重构：工程图纸风格（方格+坐标+颜色代码）\n- 🛠 修复二维码生成崩溃问题\n- 🛠 修复LazyVerticalGrid嵌套崩溃\n- 🛠 修复FavoritesScreen无导航\n- 🛠 图片转换移至后台线程（防ANR）\n- 🎨 首页常用工具限6个\n- 🎨 工具页增加搜索栏+分类计数+入场动画\n- 🎨 亲戚称呼计算器改为计算器风格按钮交互\n- 🎨 空状态增加图标"
 }
