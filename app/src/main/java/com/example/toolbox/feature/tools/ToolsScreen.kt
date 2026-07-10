@@ -190,7 +190,7 @@ private fun ToolGridCard(
                     Text(tool.title, style = MaterialTheme.typography.titleMedium)
                     Text(tool.description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                 }
-                IconButton(onClick = onToggleFavorite, modifier = Modifier.size(36.dp)) {
+                IconButton(onClick = onToggleFavorite, modifier = Modifier.size(40.dp)) {
                     Icon(if (isFavorite) Icons.Filled.Star else Icons.Outlined.Star, "收藏",
                         tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                         modifier = Modifier.size(18.dp))

@@ -167,7 +167,7 @@ private fun FavoriteToolChip(tool: Tool, onClick: () -> Unit, onToggleFavorite: 
             Icon(tool.icon, tool.title, tint = tool.category.color, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(tool.title, style = MaterialTheme.typography.labelLarge, maxLines = 1)
-            IconButton(onClick = onToggleFavorite, modifier = Modifier.size(24.dp)) {
+            IconButton(onClick = onToggleFavorite, modifier = Modifier.size(32.dp)) {
                 Icon(Icons.Filled.Star, "取消收藏", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
             }
         }

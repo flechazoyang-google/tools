@@ -67,6 +67,7 @@ import com.example.toolbox.core.components.CommonButton
 import com.example.toolbox.core.components.CommonCard
 import com.example.toolbox.core.components.CommonTextField
 import com.example.toolbox.core.components.SectionHeader
+import com.example.toolbox.core.components.TopBar
 import com.example.toolbox.data.local.entity.PasswordEntity
 import com.example.toolbox.data.repository.PasswordInput
 
@@ -85,6 +86,7 @@ fun PasswordScreen(viewModel: PasswordViewModel = hiltViewModel()) {
     val authManager = remember { BiometricAuthManager(context) }
 
     Scaffold(
+        topBar = { TopBar(title = "密码箱") },
         floatingActionButton = {
             if (!needsSetup && unlocked) {
                 FloatingActionButton(onClick = { showAdd = true }) {
@@ -99,13 +101,6 @@ fun PasswordScreen(viewModel: PasswordViewModel = hiltViewModel()) {
                 .padding(inner)
                 .padding(horizontal = 20.dp),
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                "密码箱",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-
             when {
                 needsSetup -> SetupMasterCard(viewModel)
                 !unlocked -> UnlockCard(viewModel, authManager)

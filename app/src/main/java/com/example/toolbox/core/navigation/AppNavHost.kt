@@ -1,9 +1,15 @@
 package com.example.toolbox.core.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -37,6 +43,8 @@ import com.example.toolbox.feature.settings.SettingsScreen
 import com.example.toolbox.feature.settings.SettingsViewModel
 import com.example.toolbox.feature.tools.ToolsScreen
 
+private const val TRANSITION_DURATION = 300
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ToolboxApp() {
@@ -58,6 +66,7 @@ fun ToolboxApp() {
             color = MaterialTheme.colorScheme.background,
         ) {
             Scaffold(
+                modifier = Modifier.imePadding(),
                 bottomBar = {
                     NavigationBar(
                         tonalElevation = 0.dp,
@@ -109,6 +118,24 @@ fun ToolboxApp() {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding),
+                    enterTransition = {
+                        slideInHorizontally(
+                            animationSpec = tween(TRANSITION_DURATION),
+                            initialOffsetX = { it / 4 },
+                        ) + fadeIn(animationSpec = tween(TRANSITION_DURATION))
+                    },
+                    exitTransition = {
+                        fadeOut(animationSpec = tween(TRANSITION_DURATION))
+                    },
+                    popEnterTransition = {
+                        fadeIn(animationSpec = tween(TRANSITION_DURATION))
+                    },
+                    popExitTransition = {
+                        slideOutHorizontally(
+                            animationSpec = tween(TRANSITION_DURATION),
+                            targetOffsetX = { it / 4 },
+                        ) + fadeOut(animationSpec = tween(TRANSITION_DURATION))
+                    },
                 ) {
                     composable("home") { HomeScreen(navController) }
                     composable("tools") { ToolsScreen(navController) }
