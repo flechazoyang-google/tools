@@ -1,7 +1,9 @@
 package com.example.toolbox.feature.tools
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,27 +15,36 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -42,40 +53,105 @@ import com.example.toolbox.core.tool.Tool
 import com.example.toolbox.core.tool.ToolCategory
 import com.example.toolbox.core.tool.ToolRegistry
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ToolsScreen(
     navController: NavHostController,
     viewModel: ToolsViewModel = hiltViewModel(),
 ) {
     var selectedCategory by remember { mutableStateOf<ToolCategory?>(null) } // null = 全部
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearchActive by remember { mutableStateOf(false) }
     val allTools = ToolRegistry.tools
 
-    val filtered = remember(selectedCategory) {
-        if (selectedCategory == null) allTools
-        else allTools.filter { it.category == selectedCategory }
+    // 有效的分类列表：null（全部）+ 有工具的 category，用于左右滑动切换
+    val categories = remember(allTools.size) {
+        listOf(null as ToolCategory?) +
+            ToolCategory.entries.filter { cat -> allTools.any { it.category == cat } }
+    }
+
+    val filtered = remember(selectedCategory, searchQuery) {
+        val byCategory = if (selectedCategory == null) allTools
+            else allTools.filter { it.category == selectedCategory }
+        if (searchQuery.isBlank()) byCategory
+        else byCategory.filter {
+            it.title.contains(searchQuery, true) ||
+            it.description.contains(searchQuery, true)
+        }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .pointerInput(selectedCategory) {
+                val threshold = 50.dp.toPx()
+                var accumulated = 0f
+                detectHorizontalDragGestures(
+                    onDragEnd = { accumulated = 0f },
+                    onHorizontalDrag = { change, dragAmount ->
+                        change.consume()
+                        accumulated += dragAmount
+                        val currentIdx = categories.indexOf(selectedCategory).coerceAtLeast(0)
+                        if (accumulated > threshold && currentIdx > 0) {
+                            accumulated = 0f
+                            selectedCategory = categories[currentIdx - 1]
+                        } else if (accumulated < -threshold && currentIdx < categories.size - 1) {
+                            accumulated = 0f
+                            selectedCategory = categories[currentIdx + 1]
+                        }
+                    },
+                )
+            }
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         // 搜索栏
-        Card(
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
+        val focusManager = LocalFocusManager.current
+        val focusRequester = remember { FocusRequester() }
+        LaunchedEffect(isSearchActive) {
+            if (isSearchActive) focusRequester.requestFocus()
+        }
+        if (isSearchActive) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("搜索工具…") },
+                singleLine = true,
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Filled.Clear, contentDescription = "清除")
+                        }
+                    }
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else {
+            Card(
+                onClick = { isSearchActive = true },
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Icon(Icons.Filled.Search, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("搜索工具", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Filled.Search, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("搜索工具", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
 
@@ -113,24 +189,33 @@ fun ToolsScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    "没有匹配的工具",
+                    if (searchQuery.isNotEmpty()) "没有找到「${searchQuery}」相关的工具"
+                    else "没有匹配的工具",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
         } else {
-            val rows = (filtered.size + 1) / 2
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                userScrollEnabled = false,
-                modifier = Modifier.height(((rows * 72) + ((rows - 1) * 10)).dp),
-            ) {
-                items(filtered, key = { it.id }) { tool ->
-                    ToolGridCard(tool) {
-                        viewModel.openTool(tool.id)
-                        navController.navigate(tool.route)
+            // 用 Column + Row 的非惰性网格替代 LazyVerticalGrid，避免嵌套 verticalScroll 导致的状态重置
+            val chunked = filtered.chunked(2)
+            chunked.forEach { rowItems ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.padding(bottom = 10.dp),
+                ) {
+                    rowItems.forEach { tool ->
+                        ToolGridCard(
+                            tool = tool,
+                            onClick = {
+                                viewModel.openTool(tool.id)
+                                navController.navigate(tool.route)
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    // 如果该行只有一个工具，补一个占位保持宽度均衡
+                    if (rowItems.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }
@@ -169,8 +254,12 @@ private fun CategoryTab(
 }
 
 @Composable
-private fun ToolGridCard(tool: Tool, onClick: () -> Unit) {
-    CommonCard(onClick = onClick, modifier = Modifier.fillMaxWidth().height(72.dp)) {
+private fun ToolGridCard(
+    tool: Tool,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    CommonCard(onClick = onClick, modifier = modifier.height(72.dp)) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.CenterStart,
