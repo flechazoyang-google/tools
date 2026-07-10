@@ -1,7 +1,7 @@
 {
-  "versionCode": 13,
-  "versionName": "1.4.0",
-  "downloadUrl": "https://gitee.com/yang-genhao/tools/releases/download/v1.4.0/toolbox-1.4.0.apk",
-  "downloadUrlFallback": "https://github.com/flechazoyang-google/tools/releases/download/v1.4.0/toolbox-1.4.0.apk",
-  "releaseNotes": "- ✨ 新增5个工具：二维码生成、亲戚称呼计算器、经期监控、去水印、加水印\n- ✨ 工具收藏系统：收藏工具到首页，支持独立收藏页\n- ✨ 密码箱会话超时机制：解锁后5分钟内无需重复解锁\n- ✨ 密码箱+倒数日 编辑功能\n- ✨ 删除确认弹窗：防止误删\n- ✨ 拼豆图纸重构：工程图纸风格（方格+坐标+颜色代码）\n- 🛠 修复二维码生成崩溃问题\n- 🛠 修复LazyVerticalGrid嵌套崩溃\n- 🛠 修复FavoritesScreen无导航\n- 🛠 图片转换移至后台线程（防ANR）\n- 🎨 首页常用工具限6个\n- 🎨 工具页增加搜索栏+分类计数+入场动画\n- 🎨 亲戚称呼计算器改为计算器风格按钮交互\n- 🎨 空状态增加图标"
+  "versionCode": 14,
+  "versionName": "1.4.1",
+  "downloadUrl": "https://gitee.com/yang-genhao/tools/releases/download/v1.4.1/toolbox-1.4.1.apk",
+  "downloadUrlFallback": "https://github.com/flechazoyang-google/tools/releases/download/v1.4.1/toolbox-1.4.1.apk",
+  "releaseNotes": "- ✨ Snackbar 操作反馈：收藏/删除/编辑后底部弹出提示\n- ✨ 滑动删除：密码箱列表、倒数日列表支持左滑删除\n- ✨ 震感反馈：收藏、删除、计算器按钮增加触感\n- ✨ 键盘优化：搜索栏 Enter 键收起键盘，通用文本框支持键盘动作\n- 🛠 分类标签触控目标 32dp→40dp，经期日历格子 32dp→40dp\n- 🛠 设置页硬编码标题替换为 TopBar 组件\n- 🛠 全局 Scaffold 添加 IME 键盘边距\n- 🎨 组件规格统一：圆角 20dp→16dp，按钮高度 64dp→56dp\n- 🎨 数据持久化：计算器/搜索输入在屏幕旋转后保留\n- 🎨 空状态图标统一为 56dp"
 }
