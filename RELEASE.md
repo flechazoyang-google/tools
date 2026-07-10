@@ -1,4 +1,4 @@
-# Toolbox v1.3.2 — 搜索功能 & 分类切换
+# Toolbox v1.3.3 — 滑动动画 & 界面精简
 
 一款简约实用的 Android 工具箱应用，集成 11 种日常工具，基于 Kotlin + Jetpack Compose 构建。
 
@@ -38,4 +38,4 @@
 
 ## 📦 下载
 
-[toolbox-1.3.2.apk](toolbox-1.3.2.apk)
+[toolbox-1.3.3.apk](releases/1.3/3/toolbox-1.3.3.apk)
