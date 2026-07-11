@@ -1,12 +1,21 @@
 package com.example.toolbox.feature.perler
 
+import android.content.ContentValues
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,11 +35,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -46,6 +57,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -55,7 +67,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.toolbox.core.components.TopBar
-import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -145,11 +156,21 @@ private val GRID_SIZES = listOf(16, 24, 32, 48, 64, 96, 128)
 private val GridLineColor = Color(0xFFE0E0E0)
 private val CoordColor = Color(0xFF9E9E9E)
 private val GridBg = Color.White
+private val SelectedBorderColor = Color(0xFF333333)
+private val GridLineArgb = 0xFFE0E0E0.toInt()
+private val CoordArgb = 0xFF9E9E9E.toInt()
+private val BgWhiteArgb = 0xFFFFFFFF.toInt()
 
 /** 计算某颜色的文本对比色（浅底深字 / 深底白字） */
 private fun textColorForBg(bc: BeadColor): Color {
     val luminance = 0.299f * bc.r + 0.587f * bc.g + 0.114f * bc.b
     return if (luminance > 140f) Color(0xFF333333) else Color.White
+}
+
+/** 计算某颜色对应的文字 ARGB 值（用于 Canvas 绘制） */
+private fun textArgbForBg(r: Int, g: Int, b: Int): Int {
+    val luminance = 0.299f * r + 0.587f * g + 0.114f * b
+    return if (luminance > 140f) 0xFF333333.toInt() else 0xFFFFFFFF.toInt()
 }
 
 /** 最近色匹配（欧几里得距离） */
@@ -188,12 +209,146 @@ private fun countColorsSorted(pattern: List<List<BeadColor>>): List<Pair<BeadCol
     return counts.entries.map { it.key to it.value }.sortedBy { it.first.code }
 }
 
-// ---------------------------------------------------------------------------
-// 主题色常量
-// ---------------------------------------------------------------------------
+/**
+ * 将拼豆图纸渲染为高清 Bitmap，含行号列号、色块、色号文字、网格线。
+ * 适合保存和打印。
+ */
+private fun renderPatternToBitmap(pattern: List<List<BeadColor>>, gridSize: Int): Bitmap {
+    // Choose cell pixel size based on grid to keep output manageable
+    val cellPx = when {
+        gridSize <= 32 -> 44
+        gridSize <= 48 -> 36
+        gridSize <= 64 -> 28
+        gridSize <= 96 -> 22
+        else -> 18
+    }
+    val coordPx = 28
+    val linePx = 1
+    val totalW = coordPx + gridSize * (cellPx + linePx) + linePx
+    val totalH = coordPx + gridSize * (cellPx + linePx) + linePx
 
-private val GridWhite = Color.White
-private val SelectedChip = Color(0xFF333333)
+    val bmp = Bitmap.createBitmap(totalW, totalH, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bmp)
+
+    // Background
+    canvas.drawColor(BgWhiteArgb)
+
+    // Paints
+    val gridLinePaint = Paint().apply {
+        color = GridLineArgb
+        style = Paint.Style.FILL
+        isAntiAlias = false
+    }
+    val coordTextPaint = Paint().apply {
+        color = CoordArgb
+        textAlign = Paint.Align.CENTER
+        isAntiAlias = true
+        textSize = (cellPx * 0.30f).coerceIn(8f, 13f)
+        typeface = Typeface.DEFAULT
+    }
+    val codeTextPaint = Paint().apply {
+        textAlign = Paint.Align.CENTER
+        isAntiAlias = true
+        textSize = (cellPx * 0.38f).coerceIn(9f, 17f)
+        typeface = Typeface.DEFAULT_BOLD
+    }
+    val cellPaint = Paint().apply {
+        style = Paint.Style.FILL
+        isAntiAlias = false
+    }
+
+    // Helper: x position of a grid column
+    fun colX(col: Int): Int = coordPx + linePx + col * (cellPx + linePx)
+    fun rowY(row: Int): Int = coordPx + linePx + row * (cellPx + linePx)
+
+    // ---- Column headers ----
+    for (col in 0 until gridSize) {
+        val cx = colX(col) + cellPx / 2f
+        val cy = coordPx / 2f + coordTextPaint.textSize / 3f
+        canvas.drawText("${col + 1}", cx, cy, coordTextPaint)
+    }
+
+    // ---- Row headers + cells ----
+    for (row in 0 until gridSize) {
+        // Row number
+        val rx = coordPx / 2f
+        val ry = rowY(row) + cellPx / 2f + codeTextPaint.textSize / 3f
+        canvas.drawText("${row + 1}", rx, ry, coordTextPaint)
+
+        for (col in 0 until gridSize) {
+            val bc = pattern[row][col]
+            val cx = colX(col)
+            val cy = rowY(row)
+
+            // Fill cell background
+            cellPaint.color = bc.toArgb()
+            canvas.drawRect(
+                cx.toFloat(), cy.toFloat(),
+                (cx + cellPx).toFloat(), (cy + cellPx).toFloat(),
+                cellPaint,
+            )
+
+            // Draw code text
+            val textArgb = textArgbForBg(bc.r, bc.g, bc.b)
+            codeTextPaint.color = textArgb
+            val tx = cx + cellPx / 2f
+            val ty = cy + cellPx / 2f + codeTextPaint.textSize / 3f
+            canvas.drawText(bc.code, tx, ty, codeTextPaint)
+        }
+    }
+
+    // ---- Grid lines (draw after cells to avoid being covered) ----
+    // Horizontal lines
+    for (row in 0..gridSize) {
+        val y = coordPx + row * (cellPx + linePx)
+        canvas.drawRect(
+            coordPx.toFloat(), y.toFloat(),
+            (coordPx + gridSize * (cellPx + linePx) + linePx).toFloat(),
+            (y + linePx).toFloat(),
+            gridLinePaint,
+        )
+    }
+    // Vertical lines
+    for (col in 0..gridSize) {
+        val x = coordPx + col * (cellPx + linePx)
+        canvas.drawRect(
+            x.toFloat(), coordPx.toFloat(),
+            (x + linePx).toFloat(),
+            (coordPx + gridSize * (cellPx + linePx) + linePx).toFloat(),
+            gridLinePaint,
+        )
+    }
+
+    return bmp
+}
+
+/** Save bitmap to device gallery (Pictures/Toolbox folder). */
+private fun saveBitmapToGallery(bitmap: Bitmap, context: android.content.Context): Boolean {
+    return try {
+        val fileName = "perler_${System.currentTimeMillis()}.png"
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Toolbox")
+                put(MediaStore.Images.Media.IS_PENDING, 1)
+            }
+        }
+        val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            ?: return false
+        context.contentResolver.openOutputStream(uri)?.use { os ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, os)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            values.clear()
+            values.put(MediaStore.Images.Media.IS_PENDING, 0)
+            context.contentResolver.update(uri, values, null, null)
+        }
+        true
+    } catch (_: Exception) {
+        false
+    }
+}
 
 // ---------------------------------------------------------------------------
 // 主屏幕
@@ -208,7 +363,8 @@ fun PerlerScreen() {
     var gridSize by remember { mutableStateOf(32) }
     var pattern by remember { mutableStateOf<List<List<BeadColor>>?>(null) }
     var showSizeMenu by remember { mutableStateOf(false) }
-    var showCode by remember { mutableStateOf(true) } // true=代码模式, false=色块模式
+    var selectedCell by remember { mutableStateOf<SelectedCell?>(null) }
+    var isSaving by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     val pickLauncher = rememberLauncherForActivityResult(
@@ -220,6 +376,7 @@ fun PerlerScreen() {
             inputStream?.close()
             bitmap = bmp
             pattern = null
+            selectedCell = null
         }
     }
 
@@ -294,7 +451,7 @@ fun PerlerScreen() {
                                         val lbl = if (size > 64) "${size}×${size}  (大尺寸)" else "${size}×${size}"
                                         Text(lbl)
                                     },
-                                    onClick = { gridSize = size; pattern = null; showSizeMenu = false },
+                                    onClick = { gridSize = size; pattern = null; selectedCell = null; showSizeMenu = false },
                                 )
                             }
                         }
@@ -306,6 +463,7 @@ fun PerlerScreen() {
                 // ---- 生成按钮 ----
                 Button(
                     onClick = {
+                        selectedCell = null
                         scope.launch(Dispatchers.Default) {
                             val pat = convertToPattern(bmp, gridSize)
                             withContext(Dispatchers.Main) { pattern = pat }
@@ -323,32 +481,47 @@ fun PerlerScreen() {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // ---- 模式切换 ----
+                    // ---- 图纸标题 + 保存按钮 ----
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        FilterChip(
-                            selected = showCode,
-                            onClick = { showCode = true },
-                            label = { Text("代码模式", fontSize = 13.sp) },
+                        Text(
+                            "图纸预览（${gridSize}×${gridSize}）",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        FilterChip(
-                            selected = !showCode,
-                            onClick = { showCode = false },
-                            label = { Text("色块模式", fontSize = 13.sp) },
-                        )
+                        OutlinedButton(
+                            onClick = {
+                                if (!isSaving) {
+                                    isSaving = true
+                                    scope.launch(Dispatchers.Default) {
+                                        val rendered = renderPatternToBitmap(pat, gridSize)
+                                        val ok = saveBitmapToGallery(rendered, context)
+                                        rendered.recycle()
+                                        withContext(Dispatchers.Main) {
+                                            isSaving = false
+                                            val msg = if (ok) "图纸已保存到相册 Pictures/Toolbox" else "保存失败，请重试"
+                                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                }
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            enabled = !isSaving,
+                            contentPadding = ButtonDefaults.TextButtonContentPadding,
+                        ) {
+                            Icon(Icons.Filled.SaveAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(if (isSaving) "保存中…" else "保存图纸", fontSize = 13.sp)
+                        }
                     }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // ---- 图纸标题 ----
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        "图纸预览（${gridSize}×${gridSize}）",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
+                        "点击方格可查看色号详情",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(modifier = Modifier.height(6.dp))
 
@@ -356,12 +529,22 @@ fun PerlerScreen() {
                     EngineeringGrid(
                         pattern = pat,
                         gridSize = gridSize,
-                        showCode = showCode,
+                        selectedRow = selectedCell?.row,
+                        selectedCol = selectedCell?.col,
+                        onCellClick = { row, col, bc ->
+                            selectedCell = SelectedCell(row, col, bc)
+                        },
                     )
+
+                    // ---- 选中格子详情卡片 ----
+                    selectedCell?.let { cell ->
+                        Spacer(modifier = Modifier.height(10.dp))
+                        SelectedCellCard(cell)
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // ---- 颜色图例（工程风格色条） ----
+                    // ---- 颜色图例 ----
                     Text(
                         "颜色代码（${colorCounts.size} 种）",
                         style = MaterialTheme.typography.titleSmall,
@@ -409,6 +592,72 @@ fun PerlerScreen() {
 }
 
 // ---------------------------------------------------------------------------
+// 选中格子数据
+// ---------------------------------------------------------------------------
+
+private data class SelectedCell(
+    val row: Int,
+    val col: Int,
+    val bead: BeadColor,
+)
+
+// ---------------------------------------------------------------------------
+// 选中格子详情卡片
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun SelectedCellCard(cell: SelectedCell) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(cell.bead.color)
+                    .border(1.dp, GridLineColor, RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    cell.bead.code,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = textColorForBg(cell.bead),
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        cell.bead.code,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        cell.bead.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    "位置：第 ${cell.row + 1} 行  第 ${cell.col + 1} 列",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // 工程图纸网格
 // ---------------------------------------------------------------------------
 
@@ -416,7 +665,9 @@ fun PerlerScreen() {
 private fun EngineeringGrid(
     pattern: List<List<BeadColor>>,
     gridSize: Int,
-    showCode: Boolean,
+    selectedRow: Int?,
+    selectedCol: Int?,
+    onCellClick: (Int, Int, BeadColor) -> Unit,
 ) {
     val gridLineWidth = 0.5.dp
     val coordWidth = 22.dp
@@ -440,10 +691,7 @@ private fun EngineeringGrid(
             Column {
                 // ---- 坐标行头 ----
                 Row(verticalAlignment = Alignment.Bottom) {
-                    // 左上角空白
                     Box(modifier = Modifier.width(coordWidth).height(coordHeight))
-
-                    // 列号 1..gridSize
                     for (col in 1..gridSize) {
                         Box(
                             modifier = Modifier.width(cellSize),
@@ -464,7 +712,6 @@ private fun EngineeringGrid(
                 // ---- 数据行 ----
                 pattern.forEachIndexed { rowIdx, row ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        // 行号
                         Box(
                             modifier = Modifier
                                 .width(coordWidth)
@@ -479,13 +726,13 @@ private fun EngineeringGrid(
                             )
                         }
 
-                        // 单元格
-                        row.forEach { bc ->
+                        row.forEachIndexed { colIdx, bc ->
                             GridCell(
                                 bead = bc,
                                 size = cellSize,
-                                showCode = showCode,
                                 lineWidth = gridLineWidth,
+                                isSelected = selectedRow == rowIdx && selectedCol == colIdx,
+                                onClick = { onCellClick(rowIdx, colIdx, bc) },
                             )
                         }
                     }
@@ -493,11 +740,10 @@ private fun EngineeringGrid(
             }
         }
 
-        // 极小单元格提示
-        if (cellSize < 5.dp) {
+        if (cellSize < 10.dp) {
             Text(
-                "图纸尺寸较大，建议左右滑动查看细节",
-                fontSize = 11.sp,
+                "图纸尺寸较大，左右滑动查看，点击方格可查看色号详情",
+                fontSize = 10.sp,
                 color = CoordColor,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -512,40 +758,59 @@ private fun EngineeringGrid(
 private fun GridCell(
     bead: BeadColor,
     size: Dp,
-    showCode: Boolean,
     lineWidth: Dp,
+    isSelected: Boolean,
+    onClick: () -> Unit,
 ) {
     val bg = bead.color
     val codeTextColor = textColorForBg(bead)
+    val canShowText = size >= 10.dp
 
     Box(
         modifier = Modifier
             .size(size)
-            .background(if (showCode) bg.copy(alpha = 0.12f) else bg)
-            .border(lineWidth, GridLineColor),
+            .background(bg)
+            .then(
+                if (isSelected) Modifier.border(2.dp, SelectedBorderColor)
+                else Modifier.border(lineWidth, GridLineColor)
+            )
+            .clickable { onClick() },
         contentAlignment = Alignment.Center,
     ) {
-        if (showCode && size >= 6.dp) {
-            val fs = (size.value * 0.38f).coerceIn(5f, 14f)
-            Text(
-                bead.code,
-                fontSize = fs.sp,
-                fontWeight = FontWeight.Medium,
-                color = codeTextColor,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Clip,
-            )
+        if (canShowText) {
+            val fs = (size.value * 0.36f).coerceIn(7f, 14f)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    bead.code,
+                    fontSize = fs.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = codeTextColor.copy(alpha = 0.92f),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Clip,
+                    lineHeight = (fs * 1.1f).sp,
+                )
+                if (size >= 22.dp) {
+                    Text(
+                        bead.name,
+                        fontSize = (fs * 0.65f).sp,
+                        color = codeTextColor.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Clip,
+                    )
+                }
+            }
         }
     }
 }
 
-/** 根据屏幕可用宽度和 gridSize 计算单元格大小 */
+/** 根据屏幕可用宽度和 gridSize 计算单元格大小，最小 12dp 保证色号可见 */
 @Composable
 private fun calculateCellSize(gridSize: Int): Dp {
     val screenWidth = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp
-    val usableWidth = screenWidth - 32.dp - 22.dp - 8.dp  // padding + coord + border
-    return maxOf(usableWidth / gridSize, 3.dp)
+    val usableWidth = screenWidth - 32.dp - 22.dp - 8.dp
+    return maxOf(usableWidth / gridSize, 12.dp)
 }
 
 // ---------------------------------------------------------------------------
@@ -573,14 +838,12 @@ private fun CodeLegend(colorCounts: List<Pair<BeadColor, Int>>) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
-                    // 色块
                     Box(
                         modifier = Modifier
                             .size(14.dp)
                             .background(bc.color)
                             .border(0.5.dp, GridLineColor),
                     )
-                    // 代码 + 数量
                     Text(
                         "${bc.code} ×$count",
                         fontSize = 11.sp,

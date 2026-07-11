@@ -13,12 +13,20 @@ data class CountdownExport(
     val targetDate: Long,
     val colorTag: String,
     val isPinned: Boolean,
+    val type: String = "countdown",
+    val isLunar: Boolean = false,
+    val lunarMonth: Int = 0,
+    val lunarDay: Int = 0,
 ) {
     fun toEntity(): CountdownEntity = CountdownEntity(
         title = title,
         targetDate = targetDate,
         colorTag = colorTag,
         isPinned = isPinned,
+        type = type,
+        isLunar = isLunar,
+        lunarMonth = lunarMonth,
+        lunarDay = lunarDay,
     )
 
     companion object {
@@ -27,6 +35,10 @@ data class CountdownExport(
             targetDate = e.targetDate,
             colorTag = e.colorTag,
             isPinned = e.isPinned,
+            type = e.type,
+            isLunar = e.isLunar,
+            lunarMonth = e.lunarMonth,
+            lunarDay = e.lunarDay,
         )
     }
 }

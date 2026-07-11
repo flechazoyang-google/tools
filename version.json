@@ -1,7 +1,7 @@
 {
-  "versionCode": 16,
-  "versionName": "1.4.3",
-  "downloadUrl": "https://gitee.com/yang-genhao/tools/releases/download/v1.4.3/toolbox-1.4.3.apk",
-  "downloadUrlFallback": "https://github.com/flechazoyang-google/tools/releases/download/v1.4.3/toolbox-1.4.3.apk",
-  "releaseNotes": "✨ 首页新增「我的收藏」快捷入口芯片，点击直达收藏页"
+  "versionCode": 17,
+  "versionName": "1.4.4",
+  "downloadUrl": "https://gitee.com/yang-genhao/tools/releases/download/v1.4.4/toolbox-1.4.4.apk",
+  "downloadUrlFallback": "https://github.com/flechazoyang-google/tools/releases/download/v1.4.4/toolbox-1.4.4.apk",
+  "releaseNotes": "✨ 经期记录新增排卵期/安全期推算 · 倒数日内置14个节日+农历支持 · 拼豆图纸色号显示优化+保存功能"
 }

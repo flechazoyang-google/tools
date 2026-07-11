@@ -50,6 +50,9 @@ import java.util.Locale
 private val PeriodColor = Color(0xFFE91E63)
 private val PeriodColorLight = Color(0xFFFCE4EC)
 private val PredictedDotColor = Color(0xFFF8BBD0)
+private val OvulationColor = Color(0xFF9C27B0)
+private val FertileColor = Color(0xFFE1BEE7)
+private val SafeColor = Color(0xFFC8E6C9)
 
 @Composable
 fun PeriodScreen(
@@ -59,7 +62,6 @@ fun PeriodScreen(
     var calendarYear by remember { mutableIntStateOf(Calendar.getInstance().get(Calendar.YEAR)) }
     var calendarMonth by remember { mutableIntStateOf(Calendar.getInstance().get(Calendar.MONTH)) }
     val todayMs = remember { PeriodViewModel.startOfDay(System.currentTimeMillis()) }
-    val calendar = remember { Calendar.getInstance(Locale.CHINA) }
 
     val stats = remember(periods) { computeStats(periods, todayMs) }
 
@@ -108,26 +110,22 @@ fun PeriodScreen(
                 periods = periods,
                 predictedStart = stats.nextPredictedStart,
                 predictedEnd = stats.nextPredictedEnd,
+                ovulationDay = stats.ovulationDay,
+                fertileStart = stats.fertileStart,
+                fertileEnd = stats.fertileEnd,
                 onDayClick = { viewModel.toggleDate(it) },
             )
 
             // Legend
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LegendItem(color = PeriodColor, label = "经期")
-                LegendItem(color = PredictedDotColor, label = "预测")
-                Text(
-                    "●",
-                    fontSize = 10.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    "今日",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                LegendItem(color = OvulationColor, label = "排卵日")
+                LegendItem(color = FertileColor, label = "易孕期")
+                LegendItem(color = SafeColor, label = "安全期")
+                LegendItem(color = PredictedDotColor, label = "预测经期")
             }
 
             // Info card
@@ -144,7 +142,8 @@ fun PeriodScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "• 点击日历上的日期标记/取消经期\n" +
-                        "• 系统会根据记录自动预测下次经期\n" +
+                        "• 系统会自动推算排卵期和易孕期\n" +
+                        "• 排卵日为下次经期前14天，易孕期为排卵日前后共7天\n" +
                         "• 预测基于最近3次周期的平均值",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -243,6 +242,9 @@ private fun CalendarGrid(
     periods: List<PeriodRecord>,
     predictedStart: Long?,
     predictedEnd: Long?,
+    ovulationDay: Long?,
+    fertileStart: Long?,
+    fertileEnd: Long?,
     onDayClick: (Long) -> Unit,
 ) {
     val cal = remember { Calendar.getInstance(Locale.CHINA) }
@@ -250,6 +252,10 @@ private fun CalendarGrid(
     val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
     val firstDayOfWeek = (cal.get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY + 7) % 7 // 0=Sun
     val today = PeriodViewModel.startOfDay(todayMs)
+
+    // Compute last period end for safe-zone calculation
+    val sortedPeriods = remember(periods) { periods.sortedBy { it.startDateMillis } }
+    val lastPeriodEnd = sortedPeriods.lastOrNull()?.endDateMillis
 
     // Day-of-week header
     val dayNames = listOf("日", "一", "二", "三", "四", "五", "六")
@@ -289,9 +295,28 @@ private fun CalendarGrid(
                             val dayMs = PeriodViewModel.startOfDay(cal.timeInMillis)
                             val isToday = dayMs == today
                             val isPeriod = periods.any { dayMs in it.startDateMillis..it.endDateMillis }
+                            val isOvulation = ovulationDay != null && dayMs == ovulationDay && !isPeriod
+                            val isFertile = fertileStart != null && fertileEnd != null &&
+                                dayMs in fertileStart..fertileEnd && !isPeriod && !isOvulation
                             val isPredicted = predictedStart != null && predictedEnd != null &&
-                                dayMs in predictedStart..predictedEnd &&
-                                !isPeriod
+                                dayMs in predictedStart..predictedEnd && !isPeriod
+                            val isSafe = predictedStart != null && lastPeriodEnd != null &&
+                                dayMs > lastPeriodEnd && dayMs < predictedStart &&
+                                !isPeriod && !isOvulation && !isFertile && !isPredicted
+
+                            // Background color by priority: period > ovulation > fertile > safe
+                            val bgColor = when {
+                                isPeriod -> PeriodColor
+                                isOvulation -> OvulationColor
+                                isFertile -> FertileColor
+                                isSafe -> SafeColor
+                                else -> null
+                            }
+                            val textColor = when {
+                                isPeriod || isOvulation -> Color.White
+                                isPredicted -> PredictedDotColor.copy(alpha = 0.8f)
+                                else -> MaterialTheme.colorScheme.onSurface
+                            }
 
                             Box(
                                 modifier = Modifier
@@ -304,13 +329,10 @@ private fun CalendarGrid(
                                     modifier = Modifier
                                         .size(40.dp)
                                         .then(
-                                            if (isPeriod) Modifier
+                                            if (bgColor != null) Modifier
                                                 .clip(CircleShape)
-                                                .background(PeriodColor)
-                                            else Modifier
-                                        )
-                                        .then(
-                                            if (isToday && !isPeriod) Modifier
+                                                .background(bgColor)
+                                            else if (isToday) Modifier
                                                 .clip(CircleShape)
                                                 .border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape)
                                             else Modifier
@@ -321,12 +343,8 @@ private fun CalendarGrid(
                                     Text(
                                         text = "$day",
                                         fontSize = 13.sp,
-                                        fontWeight = if (isPeriod || isToday) FontWeight.Bold else FontWeight.Normal,
-                                        color = when {
-                                            isPeriod -> Color.White
-                                            isPredicted -> PredictedDotColor.copy(alpha = 0.8f)
-                                            else -> MaterialTheme.colorScheme.onSurface
-                                        },
+                                        fontWeight = if (isPeriod || isOvulation || isToday) FontWeight.Bold else FontWeight.Normal,
+                                        color = textColor,
                                         textAlign = TextAlign.Center,
                                     )
                                     // Predicted dot indicator
@@ -338,6 +356,15 @@ private fun CalendarGrid(
                                                 .size(4.dp)
                                                 .clip(CircleShape)
                                                 .background(PredictedDotColor),
+                                        )
+                                    }
+                                    // Ovulation star indicator
+                                    if (isOvulation) {
+                                        Text(
+                                            text = "★",
+                                            fontSize = 8.sp,
+                                            color = Color.White,
+                                            modifier = Modifier.align(Alignment.TopCenter),
                                         )
                                     }
                                 }

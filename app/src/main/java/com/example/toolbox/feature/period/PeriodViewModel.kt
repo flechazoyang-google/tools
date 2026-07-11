@@ -92,6 +92,10 @@ data class PeriodStats(
     val nextPredictedStart: Long? = null,
     val nextPredictedEnd: Long? = null,
     val daysUntilNext: Int? = null,
+    // Ovulation / fertile window
+    val ovulationDay: Long? = null,     // predicted ovulation date
+    val fertileStart: Long? = null,     // fertile window start (ovulation - 5)
+    val fertileEnd: Long? = null,       // fertile window end (ovulation + 1)
 )
 
 fun computeStats(records: List<PeriodRecord>, today: Long): PeriodStats {
@@ -135,5 +139,8 @@ fun computeStats(records: List<PeriodRecord>, today: Long): PeriodStats {
         nextPredictedStart = predictedStart,
         nextPredictedEnd = predictedEnd,
         daysUntilNext = daysUntil,
+        ovulationDay = predictedStart?.let { it - 14 * 86_400_000L },
+        fertileStart = predictedStart?.let { it - 19 * 86_400_000L },  // ovulation - 5
+        fertileEnd = predictedStart?.let { it - 13 * 86_400_000L },    // ovulation + 1
     )
 }

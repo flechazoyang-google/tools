@@ -12,4 +12,7 @@ data class CountdownEntity(
     val colorTag: String = "#4F7CFF",
     val isPinned: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
+    val isLunar: Boolean = false,   // true if the date is in lunar calendar
+    val lunarMonth: Int = 0,         // lunar month (1-12), 0 if not lunar
+    val lunarDay: Int = 0,           // lunar day (1-30), 0 if not lunar
 )

@@ -10,6 +10,7 @@ import com.example.toolbox.data.local.AppDatabase
 import com.example.toolbox.data.local.dao.CountdownDao
 import com.example.toolbox.data.local.dao.CurrencyRateDao
 import com.example.toolbox.data.local.dao.PasswordDao
+import com.example.toolbox.data.local.datastore.HolidayDataStore
 import com.example.toolbox.data.local.datastore.IpCacheDataStore
 import com.example.toolbox.data.local.datastore.PeriodDataStore
 import com.example.toolbox.data.local.datastore.SettingsDataStore
@@ -50,6 +51,10 @@ object AppModule {
     fun providePeriodStore(@ApplicationContext context: Context): DataStore<Preferences> =
         PreferenceDataStoreFactory.create(produceFile = { context.preferencesDataStoreFile("period") })
 
+    @Provides @Singleton @Named("holiday")
+    fun provideHolidayStore(@ApplicationContext context: Context): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create(produceFile = { context.preferencesDataStoreFile("holiday") })
+
     @Provides @Singleton
     fun provideExchangeApi(): ExchangeRateApi =
         Retrofit.Builder()
@@ -76,6 +81,7 @@ object AppModule {
     @Provides @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "toolbox.db")
+            .addMigrations(AppDatabase.MIGRATION_2_3)
             .fallbackToDestructiveMigration()
             .build()
 
@@ -121,4 +127,10 @@ object AppModule {
         @Named("period") ds: DataStore<Preferences>,
         gson: Gson,
     ): PeriodDataStore = PeriodDataStore(ds, gson)
+
+    @Provides @Singleton
+    fun provideHolidayDataStore(
+        @Named("holiday") ds: DataStore<Preferences>,
+        gson: Gson,
+    ): HolidayDataStore = HolidayDataStore(ds, gson)
 }
