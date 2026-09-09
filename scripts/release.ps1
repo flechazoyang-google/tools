@@ -44,6 +44,10 @@ $aapt2 = 'E:\Android\SDK\build-tools\34.0.0\aapt2.exe'
 $apksigner = 'E:\Android\SDK\build-tools\34.0.0\apksigner.bat'
 $websiteRepo = 'flechazoyang-google/personal-website'
 
+# gh 可能不在当前 shell 的 PATH 上，做一次兜底解析
+$gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
+if (-not $gh) { $gh = 'C:\Program Files\GitHub CLI\gh.exe' }
+
 function Info($m) { Write-Host "[release] $m" -ForegroundColor Cyan }
 function Warn($m) { Write-Host "[warn]    $m" -ForegroundColor Yellow }
 function Die($m) { Write-Host "[error]   $m" -ForegroundColor Red; exit 1 }
@@ -191,9 +195,10 @@ if ($DryRun) {
 if ($DryRun) {
     Info "[DryRun] gh release create $tag <apk> --title $tag --notes-file <notes> --latest"
 } else {
+    if (-not (Test-Path $gh)) { Die "找不到 gh CLI（$gh），请安装或修正路径" }
     Info "创建 GitHub Release…"
-    Run { gh release create $tag $apkDst --title $tag --notes-file $notesPath --latest }
-    $releaseUrl = (gh release view $tag --json url --jq .url).Trim()
+    Run { & $gh release create $tag $apkDst --title $tag --notes-file $notesPath --latest }
+    $releaseUrl = (& $gh release view $tag --repo 'flechazoyang-google/tools' --json url --jq .url).Trim()
     Info "Release：$releaseUrl"
 }
 
@@ -201,7 +206,7 @@ if ($DryRun) {
 if ($DryRun) {
     Info "[DryRun] gh workflow run update-projects.yml --repo $websiteRepo"
 } else {
-    & gh workflow run update-projects.yml --repo $websiteRepo 2>&1 | Out-Null
+    & $gh workflow run update-projects.yml --repo $websiteRepo 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
         Info "已触发网站数据更新（personal-website）"
     } else {
