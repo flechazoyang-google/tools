@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Framework theme only used for the window background before Compose draws.
-         Compose applies its own Material 3 theme at runtime. -->
-    <style name="Theme.Toolbox" parent="Theme.AppCompat.NoActionBar" />
+    <!--
+      启动主题（Compose 接管之前的窗口）。使用平台 Material 主题以免引入
+      com.google.android.material 依赖；深色模式由 values-night 覆盖。
+      状态栏图标明暗由 ToolboxApp 在运行时根据用户主题设置同步。
+    -->
+    <style name="Theme.Toolbox" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/toolbox_window_background</item>
+    </style>
 </resources>

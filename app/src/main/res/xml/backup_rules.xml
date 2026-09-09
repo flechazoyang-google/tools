@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  API 23–30 的备份规则：排除密码箱密文。
+  虽然密文由 PBKDF2 派生密钥加密，但没有任何理由把它同步到云端。
+-->
+<full-backup-content>
+    <exclude domain="file" path="vault.dat" />
+    <exclude domain="sharedpref" path="period_records.xml" />
+</full-backup-content>
