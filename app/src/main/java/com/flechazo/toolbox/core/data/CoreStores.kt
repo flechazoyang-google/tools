@@ -11,6 +11,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.flechazo.toolbox.feature.period.PeriodCodec
+import com.flechazo.toolbox.feature.period.PeriodData
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
@@ -118,37 +120,41 @@ object CoreStoreModule {
     fun provideGson(): Gson = Gson()
 }
 
-/** 经期开始日期集合，DataStore 持久化（替代原先裸 SharedPreferences）。 */
+/**
+ * 经期记录：周期（起止 + 每日经量）+ 每日主观记录 + 设置。
+ *
+ * v2 结构整体存为一份 JSON（`period_data_v2`），旧版的 `starts` 字符串数组
+ * 在首次读取时迁移为周期记录并保留一个版本，便于回滚。
+ */
 @Singleton
 class PeriodRepository @Inject constructor(
     @Named("period") private val store: DataStore<Preferences>,
-    private val gson: Gson,
 ) {
-    private val keyStarts = stringPreferencesKey("starts")
+    private val keyData = stringPreferencesKey("period_data_v2")
+    private val keyLegacyStarts = stringPreferencesKey("starts")
 
-    val starts: Flow<List<LocalDate>> = store.data.map { prefs -> decode(prefs[keyStarts]) }
+    val data: Flow<PeriodData> = store.data.map { read(it) }
 
-    suspend fun add(date: LocalDate) {
+    /** 首次读取时把旧版「开始日数组」迁移为新结构；幂等，可重复调用。 */
+    suspend fun ensureMigrated() {
         store.edit { prefs ->
-            val next = (decode(prefs[keyStarts]) + date).distinct().sortedDescending()
-            prefs[keyStarts] = gson.toJson(next.map { it.toString() })
+            if (prefs[keyData].isNullOrBlank() && !prefs[keyLegacyStarts].isNullOrBlank()) {
+                val records = PeriodCodec.decodeLegacyStarts(prefs[keyLegacyStarts])
+                prefs[keyData] = PeriodCodec.encode(PeriodData(records = records))
+            }
         }
     }
 
-    suspend fun remove(date: LocalDate) {
-        store.edit { prefs ->
-            val next = decode(prefs[keyStarts]).filterNot { it == date }.sortedDescending()
-            prefs[keyStarts] = gson.toJson(next.map { it.toString() })
-        }
+    suspend fun save(data: PeriodData) {
+        store.edit { prefs -> prefs[keyData] = PeriodCodec.encode(data) }
     }
 
-    private fun decode(raw: String?): List<LocalDate> {
-        if (raw.isNullOrBlank()) return emptyList()
-        return runCatching {
-            gson.fromJson(raw, Array<String>::class.java)?.toList().orEmpty()
-        }.getOrDefault(emptyList())
-            .mapNotNull { runCatching { LocalDate.parse(it) }.getOrNull() }
-            .sortedDescending()
+    private fun read(prefs: Preferences): PeriodData {
+        val raw = prefs[keyData]
+        if (!raw.isNullOrBlank()) return PeriodCodec.decode(raw)
+        // 迁移尚未落盘时，直接按旧格式呈现，避免中间态丢数据。
+        val legacy = PeriodCodec.decodeLegacyStarts(prefs[keyLegacyStarts])
+        return if (legacy.isEmpty()) PeriodData() else PeriodData(records = legacy)
     }
 }
 

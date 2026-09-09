@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  API 23–30 的备份规则：排除密码箱密文。
+  API 23–30 的备份规则：排除密码箱密文与经期记录。
   虽然密文由 PBKDF2 派生密钥加密，但没有任何理由把它同步到云端。
+  经期数据属敏感个人信息（PIPL 第 28 条），同样不进云备份。
+
+  注意：PeriodRepository 使用 DataStore，落盘路径是
+  files/datastore/period_records.preferences_pb，而不是旧的
+  sharedpref/period_records.xml —— 排除路径必须与之一致。
 -->
 <full-backup-content>
     <exclude domain="file" path="vault.dat" />
-    <exclude domain="sharedpref" path="period_records.xml" />
+    <exclude domain="file" path="datastore/period_records.preferences_pb" />
 </full-backup-content>

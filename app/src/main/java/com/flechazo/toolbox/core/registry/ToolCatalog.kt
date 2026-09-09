@@ -171,9 +171,13 @@ object ToolCatalog {
         ) { onBack -> KinshipScreen(onBack) },
 
         ToolDef(
-            id = "period", title = "经期记录", description = "周期记录与预测提醒",
+            id = "period", title = "经期记录", description = "周期记录、日历预测与趋势",
             icon = ToolIcons.period, category = ToolCategory.LIFE,
-            keywords = listOf("经期", "生理期", "周期", "period"), priority = 1,
+            keywords = listOf(
+                "经期", "生理期", "周期", "period", "月经", "例假", "大姨妈", "姨妈",
+                "安全期", "排卵", "排卵期", "易孕期", "备孕",
+            ),
+            priority = 1,
         ) { onBack -> PeriodScreen(onBack) },
 
         // ---- P2 tools ----

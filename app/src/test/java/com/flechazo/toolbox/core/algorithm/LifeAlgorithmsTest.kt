@@ -1,12 +1,10 @@
 package com.flechazo.toolbox.core.algorithm
 
 import com.flechazo.toolbox.feature.kinship.reverseRelation
-import com.flechazo.toolbox.feature.period.predictPeriod
 import com.flechazo.toolbox.feature.pomodoro.remainingSeconds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import java.time.LocalDate
 
 /** 亲戚称呼反推、经期预测、番茄钟计时三个纯函数算法的回归测试。 */
 class LifeAlgorithmsTest {
@@ -68,41 +66,7 @@ class LifeAlgorithmsTest {
     }
 
     // ---------------- 经期预测 ----------------
-
-    private val today: LocalDate = LocalDate.of(2026, 1, 10)
-
-    @Test
-    fun emptyHistoryUsesDefaultCycle() {
-        val p = predictPeriod(emptyList(), today)
-        assertEquals(28, p.averageCycle)
-        assertNull(p.nextStart)
-        assertNull(p.ovulation)
-    }
-
-    @Test
-    fun regularCycle() {
-        val starts = listOf(today, today.minusDays(28), today.minusDays(56))
-        val p = predictPeriod(starts, today)
-        assertEquals(28, p.averageCycle)
-        assertEquals(today.plusDays(28), p.nextStart)
-        assertEquals(today.plusDays(14), p.ovulation)
-        assertEquals(today.plusDays(9), p.fertileStart)
-        assertEquals(today.plusDays(15), p.fertileEnd)
-    }
-
-    @Test
-    fun outlierGapIsIgnored() {
-        // 14 天间隔不在 15..60 内，被剔除；剩下 28/28
-        val starts = listOf(today, today.minusDays(14), today.minusDays(42), today.minusDays(70))
-        assertEquals(28, predictPeriod(starts, today).averageCycle)
-    }
-
-    @Test
-    fun overduePredictionRollsForward() {
-        // 最后一次记录在 40 天前，28 天周期已过 → 顺延到下一个周期
-        val p = predictPeriod(listOf(today.minusDays(40)), today)
-        assertEquals(today.plusDays(16), p.nextStart)
-    }
+    // 已迁移到 feature/period/PeriodPredictorTest.kt（算法与模型重写，签名变更）。
 
     // ---------------- 番茄钟计时 ----------------
 

@@ -2,14 +2,19 @@
 <!--
   API 31+ 的备份/迁移规则：密码箱密文与经期记录不参与云备份，
   也不参与换机迁移。
+
+  经期数据属敏感个人信息（PIPL 第 28 条）。DataStore 的实际落盘路径是
+  files/datastore/period_records.preferences_pb（path 相对 files/ 域），
+  旧写法 sharedpref/period_records.xml 已不匹配任何文件。
+  只把 allowBackup 置 false 不足以阻止 device-to-device 迁移，故两处都要排除。
 -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="file" path="vault.dat" />
-        <exclude domain="sharedpref" path="period_records.xml" />
+        <exclude domain="file" path="datastore/period_records.preferences_pb" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="vault.dat" />
-        <exclude domain="sharedpref" path="period_records.xml" />
+        <exclude domain="file" path="datastore/period_records.preferences_pb" />
     </device-transfer>
 </data-extraction-rules>

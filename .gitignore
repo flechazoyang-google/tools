@@ -47,6 +47,9 @@ releases/**/*.apk
 .reasonix/
 .workbuddy/
 
+# 本地工作台账（未完成项跟踪，仅本机留存，不提交）
+docs/PERIOD_P1_BACKLOG.md
+
 # UI 转储 / 临时调试文件
 uc.xml
 ui_*.xml

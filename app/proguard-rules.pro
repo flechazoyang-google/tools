@@ -30,12 +30,14 @@
 -keepclassmembers,allowobfuscation class * {
     @com.google.gson.annotations.SerializedName <fields>;
 }
-# 项目内 Gson 模型：汇率响应 / 密码箱条目 / 旧版备份 DTO
+# 项目内 Gson 模型：汇率响应 / 密码箱条目 / 旧版备份 DTO / 经期存储 DTO
 -keep class com.flechazo.toolbox.feature.currency.RateResponse { *; }
 -keep class com.flechazo.toolbox.feature.password_vault.VaultEntry { *; }
 -keep class com.flechazo.toolbox.core.data.LegacyCountdown { *; }
 -keep class com.flechazo.toolbox.core.data.LegacyPassword { *; }
 -keep class com.flechazo.toolbox.core.data.LegacyBackup { *; }
+# 经期记录的磁盘格式依赖 DTO 字段名；混淆字段名会让已存数据读不出来（静默丢数据）
+-keep class com.flechazo.toolbox.feature.period.PeriodCodec$* { *; }
 -dontwarn com.google.gson.**
 
 # ---- ZXing ----

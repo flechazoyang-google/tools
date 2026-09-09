@@ -320,13 +320,15 @@ fun ResultCard(
     onClick: (() -> Unit)? = null,
     /** false 时允许换行并支持选中复制（Base64 等多行结果）。 */
     singleLine: Boolean = true,
+    containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
 ) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clip(RoundedCornerShape(18.dp)).clickable(onClick = onClick) else Modifier),
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.primaryContainer,
+        color = containerColor,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
@@ -335,7 +337,7 @@ fun ResultCard(
             Text(
                 label,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
+                color = contentColor.copy(alpha = 0.75f),
             )
             Row(verticalAlignment = Alignment.Bottom) {
                 val valueText: @Composable () -> Unit = {
@@ -343,7 +345,7 @@ fun ResultCard(
                         value,
                         style = MaterialTheme.typography.displaySmall,
                         fontFamily = FontFamily.Monospace,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = contentColor,
                         maxLines = if (singleLine) 1 else Int.MAX_VALUE,
                         overflow = if (singleLine) TextOverflow.Ellipsis else TextOverflow.Clip,
                         modifier = Modifier.weight(1f, fill = false),
@@ -361,7 +363,7 @@ fun ResultCard(
                     Text(
                         unit,
                         style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                        color = contentColor.copy(alpha = 0.8f),
                         modifier = Modifier.padding(bottom = 6.dp),
                     )
                 }
@@ -370,7 +372,7 @@ fun ResultCard(
                 Text(
                     caption,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
+                    color = contentColor.copy(alpha = 0.75f),
                 )
             }
         }
