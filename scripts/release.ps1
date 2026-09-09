@@ -31,6 +31,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+# 让原生命令的 stderr 不触发 terminating error（Gradle 会往 stderr 写警告）
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -Scope Global -ErrorAction SilentlyContinue) {
+    $PSNativeCommandUseErrorActionPreference = $false
+}
 $repoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repoRoot
 
