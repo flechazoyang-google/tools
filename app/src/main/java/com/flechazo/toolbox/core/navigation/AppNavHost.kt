@@ -208,7 +208,8 @@ fun ToolboxApp() {
                         val tool = toolId?.let { ToolCatalog.byId(it) }
                         if (tool != null) {
                             Box(Modifier.padding(bottom = 0.dp)) {
-                                tool.content(onBack = { navController.popBackStack() })
+                                // 位置参数：composable 函数类型的命名参数在 Kotlin 2.0 会报错
+                                tool.content({ navController.popBackStack() })
                             }
                         }
                     }
