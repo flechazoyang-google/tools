@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 与 Theme.kt 的 md_dark_background 保持一致 -->
+    <color name="toolbox_window_background">#171A18</color>
+</resources>
