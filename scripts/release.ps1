@@ -125,11 +125,13 @@ if ($SkipTests) {
 }
 
 # ---------- 4. 构建 release ----------
+# 先 clean：BuildConfig 里的 VERSION_NAME 是编译期常量，增量构建可能残留旧值
+# （v1.1.1 归档包就出现过 manifest=1.1.1 但 BuildConfig=1.1.0 的情况）
 if ($DryRun) {
-    Info "[DryRun] .\gradlew.bat :app:assembleRelease --offline"
+    Info "[DryRun] .\gradlew.bat :app:clean :app:assembleRelease --offline"
 } else {
-    Info "构建 release…"
-    Run { .\gradlew.bat :app:assembleRelease --offline }
+    Info "构建 release（先 clean，确保 BuildConfig 与版本号一致）…"
+    Run { .\gradlew.bat :app:clean :app:assembleRelease --offline }
 }
 
 # ---------- 5. 校验 APK ----------
@@ -151,6 +153,25 @@ if (-not $DryRun) {
         Info "APK 签名校验通过"
     } else {
         Warn "找不到 apksigner，跳过签名校验"
+    }
+
+    # 兜底检查：BuildConfig.VERSION_NAME 是编译期常量，曾出现 manifest 与它不一致的情况
+    try {
+        Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction SilentlyContinue
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($apkSrc)
+        $hit = $false
+        foreach ($entry in $zip.Entries) {
+            if ($entry.Name -like '*.dex') {
+                $ms = New-Object System.IO.MemoryStream
+                $entry.Open().CopyTo($ms)
+                if ([System.Text.Encoding]::UTF8.GetString($ms.ToArray()).Contains($Version)) { $hit = $true; break }
+            }
+        }
+        $zip.Dispose()
+        if ($hit) { Info "APK 内版本常量校验通过（$Version）" }
+        else { Warn "APK 内未找到版本常量 '$Version'，请确认设置页显示的应用版本号是否正确" }
+    } catch {
+        Warn "跳过 APK 内版本常量校验：$($_.Exception.Message)"
     }
 }
 

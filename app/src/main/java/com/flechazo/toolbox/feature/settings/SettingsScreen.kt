@@ -345,13 +345,6 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 )
             }
         }
-
-        Text(
-            "工具箱 v1.0.0 · 彻底重写版",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(16.dp),
-        )
     }
 
     if (showMasterDialog) {

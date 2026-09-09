@@ -2,14 +2,25 @@
 
 > 每次发布在顶部追加一条。详细说明见 `releases/v<版本>/RELEASE_NOTE.md`。
 > APK 仅本地留存（`*.apk` 已被 gitignore），对外分发走 GitHub Releases。
+>
+> **归档起点**：v1.1.2 是第一个通过 GitHub Releases 正式发布的版本。
+> v1.1.0 / v1.1.1 为发布流程建立前的内部迭代，仅保留版本说明，无归档 APK。
 
 ---
 
 ## v1.1.2 (2026-09-09)
 
-（摘要见 releases\v1.1.2\RELEASE_NOTE.md）
+正式发布版：新增「检查更新」（读 GitHub Releases）+ 一键发版脚本与本地归档。
+
+- ✨ 启动自动检查更新（每 24 小时一次）+「我的」页手动入口
+- ✨ 发现新版本弹窗：更新说明 + 立即下载（APK 资产直链）/ 详情
+- 🛠 `scripts/release.ps1` 一键发版：改版本号 → 单测 → clean 构建 → 校验签名与版本 → 归档 → tag → push → `gh release create`
+- 🛠 建立 `releases/v<版本>/` 归档与 `RELEASE_LOG.md`
+- 🐛 移除设置页残留的硬编码「工具箱 v1.0.0」文案（与真实版本号重复且陈旧）
+- 🧪 新增 `UpdateTest`（版本解析/比较），单测总数 76
 
 - Version Code：4
+- GitHub Release：https://github.com/flechazoyang-google/tools/releases/tag/v1.1.2
 
 ---
 
