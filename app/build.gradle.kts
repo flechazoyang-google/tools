@@ -22,6 +22,8 @@ android {
         targetSdk = 34
         versionCode = 3
         versionName = "1.1.1"
+        // 「检查更新」读取的 GitHub 仓库（owner/repo）
+        buildConfigField("String", "UPDATE_REPO", "\"flechazoyang-google/tools\"")
         vectorDrawables { useSupportLibrary = true }
     }
 

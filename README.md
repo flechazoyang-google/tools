@@ -42,10 +42,23 @@ com.flechazo.toolbox
 ```bash
 ./gradlew :app:assembleDebug     # Debug APK
 ./gradlew :app:assembleRelease   # Release APK（需 keystore.properties）
-./gradlew :app:testDebugUnitTest # 单元测试（71 个）
+./gradlew :app:testDebugUnitTest # 单元测试（76 个）
 ```
 
 `keystore.properties` 与 `keystore/` 已被 `.gitignore` 排除，请勿提交。
+
+## 发布
+
+一键发版（详见 [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md)）：
+
+```powershell
+# 1. 写 releases/v1.1.3/RELEASE_NOTE.md
+# 2. 发布
+.\scripts\release.ps1 -Version 1.1.3
+```
+
+脚本会改版本号、跑单测、构建并校验签名、归档到 `releases/`、提交打 tag、推送、
+用 `gh` 创建 GitHub Release 并附上 APK，最后触发个人网站数据更新。
 
 ## 设计原则
 

@@ -34,6 +34,7 @@ class SettingsRepository @Inject constructor(
 ) {
     private val keyTheme = stringPreferencesKey("theme_mode")
     private val keyDynamic = booleanPreferencesKey("dynamic_color")
+    private val keyLastUpdateCheck = longPreferencesKey("last_update_check_ms")
 
     val themeMode: Flow<ThemeMode> = store.data.map { prefs ->
         runCatching { ThemeMode.valueOf(prefs[keyTheme] ?: ThemeMode.SYSTEM.name) }
@@ -42,12 +43,19 @@ class SettingsRepository @Inject constructor(
 
     val dynamicColor: Flow<Boolean> = store.data.map { it[keyDynamic] ?: true }
 
+    /** 上次「检查更新」的时间戳，用于启动自动检查的每日限频。 */
+    val lastUpdateCheckMs: Flow<Long> = store.data.map { it[keyLastUpdateCheck] ?: 0L }
+
     suspend fun setThemeMode(mode: ThemeMode) {
         store.edit { it[keyTheme] = mode.name }
     }
 
     suspend fun setDynamicColor(enabled: Boolean) {
         store.edit { it[keyDynamic] = enabled }
+    }
+
+    suspend fun setLastUpdateCheckMs(value: Long) {
+        store.edit { it[keyLastUpdateCheck] = value }
     }
 }
 

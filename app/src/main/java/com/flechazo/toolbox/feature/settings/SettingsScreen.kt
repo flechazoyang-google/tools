@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -29,6 +30,8 @@ import androidx.lifecycle.viewModelScope
 import com.flechazo.toolbox.core.data.LegacyImporter
 import com.flechazo.toolbox.core.data.SettingsRepository
 import com.flechazo.toolbox.core.data.ThemeMode
+import com.flechazo.toolbox.core.update.UpdateRepository
+import com.flechazo.toolbox.core.update.UpdateUiState
 import com.flechazo.toolbox.feature.countdown.CountdownRepository
 import com.google.gson.Gson
 import com.flechazo.toolbox.core.designsystem.components.ToolTextField
@@ -56,6 +59,7 @@ class SettingsViewModel @Inject constructor(
     private val settings: SettingsRepository,
     private val legacyImporter: LegacyImporter,
     private val countdownRepository: CountdownRepository,
+    private val updateRepository: UpdateRepository,
     private val gson: Gson,
 ) : ViewModel() {
 
@@ -65,6 +69,17 @@ class SettingsViewModel @Inject constructor(
     ) { mode, dynamic ->
         SettingsUiState(mode, dynamic)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
+
+    /** 与启动自动检查共用同一份状态（UpdateRepository 是单例）。 */
+    val updateState: StateFlow<UpdateUiState> = updateRepository.state
+
+    fun checkForUpdate() {
+        viewModelScope.launch { updateRepository.check(isManual = true) }
+    }
+
+    fun clearUpdateResult() = updateRepository.clearResult()
+
+    fun dismissUpdate() = updateRepository.dismiss()
 
     private val _importMessage = MutableStateFlow<String?>(null)
     val importMessage: StateFlow<String?> = _importMessage
@@ -152,6 +167,7 @@ class SettingsViewModel @Inject constructor(
 fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val importMessage by viewModel.importMessage.collectAsStateWithLifecycle()
+    val updateState by viewModel.updateState.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current
 
     var showMasterDialog by remember { mutableStateOf(false) }
@@ -273,6 +289,44 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                         "导出倒数日为 JSON，可直接再次导入",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+
+        SectionCard {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = updateState !is UpdateUiState.Checking) {
+                        viewModel.clearUpdateResult()
+                        viewModel.checkForUpdate()
+                    }
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("检查更新", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                    Text(
+                        when (val s = updateState) {
+                            is UpdateUiState.Checking -> "正在检查…"
+                            is UpdateUiState.UpToDate -> "已是最新版本 v${s.currentVersion}"
+                            is UpdateUiState.Failed -> s.message
+                            is UpdateUiState.Available -> "发现新版本 v${s.info.latestVersion}"
+                            else -> "当前版本 v${com.flechazo.toolbox.BuildConfig.VERSION_NAME}"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (updateState is UpdateUiState.Failed) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                }
+                if (updateState is UpdateUiState.Checking) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier.padding(end = 8.dp).size(20.dp),
+                        strokeWidth = 2.dp,
                     )
                 }
             }

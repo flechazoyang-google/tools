@@ -20,6 +20,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -43,6 +44,9 @@ import com.flechazo.toolbox.core.data.ThemeMode
 import com.flechazo.toolbox.core.data.ToolsStateRepository
 import com.flechazo.toolbox.core.designsystem.theme.ToolboxTheme
 import com.flechazo.toolbox.core.registry.ToolCatalog
+import com.flechazo.toolbox.core.update.UpdateDialog
+import com.flechazo.toolbox.core.update.UpdateRepository
+import com.flechazo.toolbox.core.update.UpdateUiState
 import com.flechazo.toolbox.feature.home.HomeScreen
 import com.flechazo.toolbox.feature.settings.SettingsScreen
 import com.flechazo.toolbox.feature.tools.ToolsScreen
@@ -63,6 +67,7 @@ data class AppUiState(
 class AppViewModel @Inject constructor(
     settings: SettingsRepository,
     private val toolsState: ToolsStateRepository,
+    private val updateRepository: UpdateRepository,
 ) : ViewModel() {
 
     val uiState: StateFlow<AppUiState> = combine(
@@ -71,6 +76,17 @@ class AppViewModel @Inject constructor(
     ) { mode, dynamic ->
         AppUiState(mode, dynamic)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppUiState())
+
+    val updateState: StateFlow<UpdateUiState> = updateRepository.state
+
+    /** 启动时调用；内部按 24 小时限频，不会每次都联网。 */
+    fun autoCheckForUpdate() {
+        viewModelScope.launch { updateRepository.autoCheck() }
+    }
+
+    fun dismissUpdate() {
+        updateRepository.dismiss()
+    }
 
     fun recordRecent(toolId: String) {
         viewModelScope.launch { toolsState.recordRecent(toolId) }
@@ -94,6 +110,10 @@ fun ToolboxApp() {
     val currentRoute = backStackEntry?.destination?.route
     val appViewModel: AppViewModel = hiltViewModel()
     val uiState by appViewModel.uiState.collectAsStateWithLifecycle()
+    val updateState by appViewModel.updateState.collectAsStateWithLifecycle()
+
+    // 启动时静默检查更新（内部 24 小时限频）
+    LaunchedEffect(Unit) { appViewModel.autoCheckForUpdate() }
 
     val darkTheme = when (uiState.themeMode) {
         ThemeMode.LIGHT -> false
@@ -194,6 +214,11 @@ fun ToolboxApp() {
                     }
                 }
             }
+        }
+
+        // 发现新版本时弹窗（覆盖任意页面）
+        (updateState as? UpdateUiState.Available)?.let { available ->
+            UpdateDialog(info = available.info, onDismiss = appViewModel::dismissUpdate)
         }
     }
 }
