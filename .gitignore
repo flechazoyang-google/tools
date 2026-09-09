@@ -46,3 +46,8 @@ releases/**/*.apk
 # ---------------------------------------------------------------------------
 .reasonix/
 .workbuddy/
+
+# UI 转储 / 临时调试文件
+uc.xml
+ui_*.xml
+*.uiautomator.xml
