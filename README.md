@@ -2,7 +2,7 @@
 
 一款本地优先的 Android 工具箱，27 个高频小工具，无广告、无追踪。除汇率外全部离线可用。
 
-> 当前已发布 **v1.2.0**；视觉重构（v1.2.1）已提交、待发版。
+> 当前版本 **v1.2.1**（2026-09-10）· 视觉体系重建：设计 token 化、Bento 首页、真·边到边。
 >
 > 发布记录：[releases/RELEASE_LOG.md](releases/RELEASE_LOG.md) · 项目文档：[重写方案](docs/REWRITE_PLAN.md) · [UI 重设计](docs/UI_REDESIGN_PLAN.md) · [视觉语言方向](docs/UI_VISUAL_DIRECTION.md) · [修复方案](docs/FIX_PLAN.md)
 
