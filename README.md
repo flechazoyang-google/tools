@@ -2,9 +2,9 @@
 
 一款本地优先的 Android 工具箱，27 个高频小工具，无广告、无追踪。除汇率外全部离线可用。
 
-> 当前版本 **v1.1.1** · 详见 [docs/RELEASE-v1.1.1.md](docs/RELEASE-v1.1.1.md)
+> 当前已发布 **v1.2.0**；视觉重构（v1.2.1）已提交、待发版。
 >
-> 项目文档：[重写方案](docs/REWRITE_PLAN.md) · [UI 重设计](docs/UI_REDESIGN_PLAN.md) · [修复方案](docs/FIX_PLAN.md)
+> 发布记录：[releases/RELEASE_LOG.md](releases/RELEASE_LOG.md) · 项目文档：[重写方案](docs/REWRITE_PLAN.md) · [UI 重设计](docs/UI_REDESIGN_PLAN.md) · [视觉语言方向](docs/UI_VISUAL_DIRECTION.md) · [修复方案](docs/FIX_PLAN.md)
 
 ## 工具清单（27）
 
@@ -42,7 +42,7 @@ com.flechazo.toolbox
 ```bash
 ./gradlew :app:assembleDebug     # Debug APK
 ./gradlew :app:assembleRelease   # Release APK（需 keystore.properties）
-./gradlew :app:testDebugUnitTest # 单元测试（76 个）
+./gradlew :app:testDebugUnitTest # 单元测试（194 个）
 ```
 
 `keystore.properties` 与 `keystore/` 已被 `.gitignore` 排除，请勿提交。
@@ -52,9 +52,9 @@ com.flechazo.toolbox
 一键发版（详见 [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md)）：
 
 ```powershell
-# 1. 写 releases/v1.1.3/RELEASE_NOTE.md
+# 1. 写 releases/v1.2.1/RELEASE_NOTE.md
 # 2. 发布
-.\scripts\release.ps1 -Version 1.1.3
+.\scripts\release.ps1 -Version 1.2.1
 ```
 
 脚本会改版本号、跑单测、构建并校验签名、归档到 `releases/`、提交打 tag、推送、
