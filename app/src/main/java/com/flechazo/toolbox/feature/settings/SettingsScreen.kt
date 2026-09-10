@@ -32,6 +32,7 @@ import com.flechazo.toolbox.core.data.SettingsRepository
 import com.flechazo.toolbox.core.data.ThemeMode
 import com.flechazo.toolbox.core.update.UpdateRepository
 import com.flechazo.toolbox.core.update.UpdateUiState
+import com.flechazo.toolbox.feature.countdown.CountdownBackup
 import com.flechazo.toolbox.feature.countdown.CountdownRepository
 import com.google.gson.Gson
 import com.flechazo.toolbox.core.designsystem.components.ToolTextField
@@ -99,8 +100,9 @@ class SettingsViewModel @Inject constructor(
             } else {
                 val msg = buildString {
                     append("倒数日：导入 ${result.countdownsImported} 条")
+                    if (result.lunarImported > 0) append("（含农历 ${result.lunarImported} 条）")
                     if (result.countdownsSkipped > 0) append("，跳过重复 ${result.countdownsSkipped} 条")
-                    if (result.lunarSkipped > 0) append("，农历 ${result.lunarSkipped} 条暂不支持")
+                    if (result.invalid > 0) append("， ${result.invalid} 条日期无效已忽略")
                 }
                 lastSummary = msg
                 _importMessage.value = msg
@@ -129,24 +131,20 @@ class SettingsViewModel @Inject constructor(
     fun clearMessage() { _importMessage.value = null }
 
     /**
-     * 导出倒数日到所选文件，格式与旧版 `toolbox_backup.json` 兼容，
-     * 因此导出的文件可以直接再导入回来。
+     * 导出倒数日到所选文件。
+     *
+     * 载荷是旧版 `toolbox_backup.json` 的**超集**（见 [CountdownBackup]）：
+     * 既带 v1 的 `targetDate` / `type`，也带 v2 的农历、重复、提醒、颜色字段，
+     * 所以旧版 App 能读、我们能原样读回，导出的文件也可以直接再导入回来。
      */
     fun exportBackup(context: android.content.Context, uri: android.net.Uri) {
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
                 runCatching {
                     val events = countdownRepository.observeAll().first()
-                    val payload = mapOf(
-                        "countdowns" to events.map { event ->
-                            mapOf(
-                                "title" to event.title,
-                                "targetDate" to LocalDate.parse(event.date)
-                                    .atStartOfDay(ZoneId.systemDefault())
-                                    .toInstant().toEpochMilli(),
-                                "type" to if (event.type == 0) "countdown" else "anniversary",
-                            )
-                        },
+                    val payload = linkedMapOf<String, Any>(
+                        "schemaVersion" to CountdownBackup.SCHEMA_VERSION,
+                        "countdowns" to events.map { CountdownBackup.toEvent(it) },
                         "passwords" to emptyList<Map<String, String>>(),
                     )
                     context.contentResolver.openOutputStream(uri)?.use { out ->

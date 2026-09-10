@@ -115,6 +115,16 @@ fun ToolboxApp() {
     // 启动时静默检查更新（内部 24 小时限频）
     LaunchedEffect(Unit) { appViewModel.autoCheckForUpdate() }
 
+    // 通知点击交接：把用户带到对应工具页，而不是落在首页
+    val deepLinkTool by DeepLink.toolId.collectAsStateWithLifecycle()
+    LaunchedEffect(deepLinkTool) {
+        val toolId = deepLinkTool ?: return@LaunchedEffect
+        DeepLink.clearTool()
+        if (ToolCatalog.byId(toolId) == null) return@LaunchedEffect
+        appViewModel.recordRecent(toolId)
+        navController.navigate("tool/$toolId") { launchSingleTop = true }
+    }
+
     val darkTheme = when (uiState.themeMode) {
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true

@@ -49,8 +49,13 @@ releases/**/*.apk
 
 # 本地工作台账（未完成项跟踪，仅本机留存，不提交）
 docs/PERIOD_P1_BACKLOG.md
+docs/COUNTDOWN_P1_BACKLOG.md
 
 # UI 转储 / 临时调试文件
 uc.xml
 ui_*.xml
 *.uiautomator.xml
+
+# 农历表核验用的第三方原料（天文台年历、各家实现的源码与抓取页面，含别人的版权与许可证）。
+# 只在本地用于跑 scripts/lunar-table-audit.mjs，不进仓库；缺失时该脚本会跳过 HKO 那道校验。
+lunar-research/

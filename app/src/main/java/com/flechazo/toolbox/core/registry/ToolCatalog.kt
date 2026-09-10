@@ -78,9 +78,14 @@ object ToolCatalog {
         ) { onBack -> TimestampScreen(onBack) },
 
         ToolDef(
-            id = "countdown", title = "倒数日", description = "倒数日与纪念日",
+            id = "countdown", title = "倒数日", description = "倒数日 · 纪念日 · 农历",
             icon = ToolIcons.countdown, category = ToolCategory.LIFE,
-            keywords = listOf("倒数", "纪念日", "countdown", "days"), priority = 0,
+            keywords = listOf(
+                "倒数", "纪念日", "countdown", "days", "生日", "农历", "周年",
+                "倒计时", "大姨妈", "预产期", "考试", "截止", "birthday", "anniversary", "lunar",
+                "days matter", "正数日", "节日",
+            ),
+            priority = 0,
         ) { onBack -> CountdownScreen(onBack) },
 
         ToolDef(

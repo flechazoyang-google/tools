@@ -3,6 +3,12 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!--
+      倒数日提醒依赖 AlarmManager 闹钟，而**开机后系统会清空所有闹钟**。
+      没有这条权限就只能等用户下次打开倒数日页面时才重排，期间的提醒静默丢失（P0-3）。
+      它是普通权限（安装时授予、不弹授权框），且本应用不接统计/广告 SDK，不产生任何数据外传。
+    -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
@@ -20,6 +26,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.Toolbox">
@@ -29,8 +36,27 @@
             </intent-filter>
         </activity>
 
+        <!-- 闹钟到点：只由本应用自己投递，不导出 -->
         <receiver
             android:name=".core.notify.CountdownAlarmReceiver"
             android:exported="false" />
+
+        <!--
+          系统事件重排：开机 / 改时间 / 改时区。
+          exported 必须为 true，否则收不到 system uid 发来的广播。该 receiver 不读取
+          intent 里的业务数据（只按 action 判断），触发一次自重排，导出面不引入攻击面。
+
+          刻意不声明 LOCKED_BOOT_COMPLETED：数据库在凭据加密区，解锁前根本读不到。
+        -->
+        <receiver
+            android:name=".core.notify.CountdownSystemReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

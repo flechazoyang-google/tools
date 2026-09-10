@@ -1,31 +1,21 @@
 package com.flechazo.toolbox.core.data
 
 import android.content.Context
+import com.flechazo.toolbox.feature.countdown.CountdownBackup
+import com.flechazo.toolbox.feature.countdown.CountdownEntity
 import com.flechazo.toolbox.feature.countdown.CountdownRepository
 import com.flechazo.toolbox.feature.password_vault.VaultCrypto
 import com.flechazo.toolbox.feature.password_vault.VaultEntry
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import java.time.Instant
-import java.time.ZoneId
-import javax.inject.Inject
-import javax.inject.Singleton
 
-/** DTOs matching the legacy Toolbox backup file (toolbox_backup.json). */
-data class LegacyCountdown(
-    val title: String = "",
-    val targetDate: Long = 0,
-    val colorTag: String = "#4F7CFF",
-    val isPinned: Boolean = false,
-    val type: String = "countdown",
-    val isLunar: Boolean = false,
-    val lunarMonth: Int = 0,
-    val lunarDay: Int = 0,
-)
-
+/** 密码部分的结构，与旧版 `toolbox_backup.json` 对齐。 */
 data class LegacyPassword(
     val site: String = "",
     val account: String = "",
@@ -35,22 +25,33 @@ data class LegacyPassword(
     val isFavorite: Boolean = false,
 )
 
+/**
+ * 旧版备份文件（`toolbox_backup.json`）的顶层结构。
+ *
+ * `countdowns` 直接用 [CountdownBackup.Event]：它的字段全是"可选 + 有默认值"，
+ * 因此同一份 DTO 能吃下 v1（只有 title/targetDate/type）和 v2（全字段）两种文件。
+ */
 data class LegacyBackup(
+    @SerializedName("schemaVersion") val schemaVersion: Int = 0,
     val passwords: List<LegacyPassword> = emptyList(),
-    val countdowns: List<LegacyCountdown> = emptyList(),
+    val countdowns: List<CountdownBackup.Event> = emptyList(),
 )
 
 data class ImportResult(
     val countdownsImported: Int = 0,
     val countdownsSkipped: Int = 0,
-    val lunarSkipped: Int = 0,
+    /** 从 v1 文件升格导入的条数（提醒字段按当天 09:00 兜底） */
+    val upgradedFromV1: Int = 0,
+    val lunarImported: Int = 0,
+    val invalid: Int = 0,
     val passwordsPending: Int = 0,
 )
 
 /**
- * Imports data exported by the legacy Toolbox app ("导出数据" → toolbox_backup.json).
- * Countdowns go into the new Room store; passwords need the vault master password
- * (existing vault is decrypted & merged, a missing vault is created with the given password).
+ * 导入旧版 Toolbox 导出的备份。
+ *
+ * 农历事件**不再被跳过**：旧版备份里本来就带 `isLunar / lunarMonth / lunarDay`，
+ * 之前因为新版没实现农历而整条丢弃，用户换机时这部分数据是静默消失的。
  */
 @Singleton
 class LegacyImporter @Inject constructor(
@@ -59,47 +60,46 @@ class LegacyImporter @Inject constructor(
     private val gson: Gson,
 ) {
 
-    /** Parse the backup file and import countdowns. Returns per-part results; password count is pending. */
+    /** 解析并导入倒数日部分；密码需要主密码，另走 [importPasswords]。 */
     suspend fun import(json: String): ImportResult = withContext(Dispatchers.IO) {
         val backup = parse(json)
+        val fromV1 = backup.schemaVersion < CountdownBackup.SCHEMA_VERSION
+        val existingKeys = countdownRepo.observeAll().first().map { CountdownBackup.dedupeKey(it) }.toMutableSet()
+
         var imported = 0
         var skipped = 0
         var lunar = 0
-
-        val existing = countdownRepo.observeAll().first()
-        val existingKeys = existing.map { it.title to it.date }.toMutableSet()
+        var invalid = 0
 
         backup.countdowns.forEach { item ->
-            if (item.title.isBlank() || item.targetDate <= 0) {
-                skipped++
+            val entity = CountdownBackup.fromEvent(item)
+            if (entity == null) {
+                invalid++
                 return@forEach
             }
-            if (item.isLunar) {
-                lunar++ // 新版暂不支持农历，跳过并计数
-                return@forEach
-            }
-            val date = Instant.ofEpochMilli(item.targetDate)
-                .atZone(ZoneId.systemDefault()).toLocalDate().toString()
-            val key = item.title to date
+            val key = CountdownBackup.dedupeKey(entity)
             if (key in existingKeys) {
                 skipped++
                 return@forEach
             }
-            val type = if (item.type == "countdown") 0 else 1
-            countdownRepo.add(item.title, date, type)
+            // create() 只在 createdAt 为 0 时补时间戳，因此导入保留原始创建时间
+            countdownRepo.create(entity)
             existingKeys.add(key)
             imported++
+            if (entity.isLunar) lunar++
         }
 
         ImportResult(
             countdownsImported = imported,
             countdownsSkipped = skipped,
-            lunarSkipped = lunar,
+            upgradedFromV1 = if (fromV1) imported else 0,
+            lunarImported = lunar,
+            invalid = invalid,
             passwordsPending = backup.passwords.size,
         )
     }
 
-    /** Parse a legacy backup payload. Throws if the JSON is not a usable backup object. */
+    /** 解析备份载荷。不是可用的备份对象时抛异常，由调用方转成可读提示。 */
     fun parse(json: String): LegacyBackup {
         val backup = gson.fromJson(json, LegacyBackup::class.java)
             ?: throw IllegalArgumentException("备份文件为空或格式不正确")
@@ -110,13 +110,10 @@ class LegacyImporter @Inject constructor(
     }
 
     /**
-     * Merge legacy passwords into the vault (creating it with [master] if needed).
+     * 把旧版密码合并进密码箱（没有密码箱时用 [master] 建一个）。
      *
-     * Takes the original backup JSON so the operation is stateless: the previous
-     * implementation cached the parsed passwords in a field that was never assigned,
-     * which made this method always import zero entries.
-     *
-     * @return number of newly added entries; -1 is not returned (callers map failures).
+     * 接收原始 JSON 以保证无状态：早前的实现把解析结果缓存在一个从未赋值的字段上，
+     * 导致这个方法永远导入 0 条。
      */
     suspend fun importPasswords(json: String, master: CharArray): Int = withContext(Dispatchers.IO) {
         val entries = parse(json).passwords

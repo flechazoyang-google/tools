@@ -62,11 +62,18 @@ android {
         compose = true
         buildConfig = true
     }
+
     composeOptions { kotlinCompilerExtensionVersion = "1.5.8" }
 
     packaging {
         resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
     }
+}
+
+// Room 导出版本化 schema —— 迁移可被校验的前提。
+// 生成的 app/schemas/*.json 必须提交进仓库（.gitignore 里不要排除它）。
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {

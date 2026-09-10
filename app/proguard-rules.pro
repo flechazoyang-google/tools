@@ -33,9 +33,12 @@
 # 项目内 Gson 模型：汇率响应 / 密码箱条目 / 旧版备份 DTO / 经期存储 DTO
 -keep class com.flechazo.toolbox.feature.currency.RateResponse { *; }
 -keep class com.flechazo.toolbox.feature.password_vault.VaultEntry { *; }
--keep class com.flechazo.toolbox.core.data.LegacyCountdown { *; }
 -keep class com.flechazo.toolbox.core.data.LegacyPassword { *; }
 -keep class com.flechazo.toolbox.core.data.LegacyBackup { *; }
+# 倒数日备份 DTO：读写全靠 Event / Document 的字段名（LegacyBackup.countdowns 也复用了 Event）。
+# 一旦混淆，导出的 JSON 键会变成 a/b/c，换机导入静默读空 —— 只在 release 复现，debug 单测抓不到。
+-keep class com.flechazo.toolbox.feature.countdown.CountdownBackup$Event { *; }
+-keep class com.flechazo.toolbox.feature.countdown.CountdownBackup$Document { *; }
 # 经期记录的磁盘格式依赖 DTO 字段名；混淆字段名会让已存数据读不出来（静默丢数据）
 -keep class com.flechazo.toolbox.feature.period.PeriodCodec$* { *; }
 -dontwarn com.google.gson.**
