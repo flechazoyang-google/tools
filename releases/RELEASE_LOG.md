@@ -8,6 +8,16 @@
 
 ---
 
+## v1.2.0 (2026-09-10)
+
+（摘要见 releases\v1.2.0\RELEASE_NOTE.md）
+
+- Version Code：6
+
+---
+
+
+
 ## v1.1.3 (2026-09-09)
 
 （摘要见 releases\v1.1.3\RELEASE_NOTE.md）
@@ -77,5 +87,6 @@
 - 单测 35 用例
 
 - Version Code：1
+
 
 
