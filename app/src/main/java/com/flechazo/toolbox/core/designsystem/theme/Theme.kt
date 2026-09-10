@@ -8,7 +8,28 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
+
+/**
+ * 应用**实际生效**的深浅色状态。
+ *
+ * 为什么需要它：用户可以在设置里把主题锁定为深色/浅色，此时
+ * `isSystemInDarkTheme()` 会返回系统值而非应用值。任何"按主题取色"的地方
+ * （如 [categoryColor]）都必须读这个而不是系统值，否则会取错色板。
+ */
+val LocalToolDarkTheme = staticCompositionLocalOf { false }
+
+/** 扩展语义色（success / warning）。由 [ToolboxTheme] 按深浅色提供。 */
+val LocalToolExtendedColors = staticCompositionLocalOf { LightExtendedColors }
+
+/** 取扩展语义色：`MaterialTheme.extendedColors.success` */
+val MaterialTheme.extendedColors: ToolExtendedColors
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalToolExtendedColors.current
 
 private val LightColors = lightColorScheme(
     primary = md_light_primary,
@@ -100,9 +121,15 @@ fun ToolboxTheme(
         darkTheme -> DarkColors
         else -> LightColors
     }
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = ToolboxTypography,
-        content = content,
-    )
+    CompositionLocalProvider(
+        LocalToolDarkTheme provides darkTheme,
+        LocalToolExtendedColors provides if (darkTheme) DarkExtendedColors else LightExtendedColors,
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = ToolboxTypography,
+            shapes = ToolShapes,
+            content = content,
+        )
+    }
 }

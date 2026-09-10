@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -52,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import com.flechazo.toolbox.core.designsystem.components.LabeledDropdown
 import com.flechazo.toolbox.core.designsystem.components.SegmentedTabs
 import com.flechazo.toolbox.core.designsystem.components.ToolTextField
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -345,7 +345,7 @@ private fun PickupField(text: String, icon: ImageVector, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(ToolShape.lg)
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),

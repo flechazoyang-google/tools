@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +51,7 @@ import com.flechazo.toolbox.core.designsystem.components.KeyValueRow
 import com.flechazo.toolbox.core.designsystem.components.LabeledDropdown
 import com.flechazo.toolbox.core.designsystem.components.ToolScaffold
 import com.flechazo.toolbox.core.designsystem.components.ToolSectionCard
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
 import com.flechazo.toolbox.core.util.ImageUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -441,13 +441,13 @@ fun PerlerScreen(onBack: () -> Unit, viewModel: PerlerViewModel = hiltViewModel(
                 }
                 Surface(
                     color = Color.White,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = ToolShape.md,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Box(
                         Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(ToolShape.md)
                             .padding(12.dp),
                         contentAlignment = Alignment.Center,
                     ) {

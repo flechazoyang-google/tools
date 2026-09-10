@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.flechazo.toolbox.core.designsystem.components.ToolSectionCard
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -195,11 +195,11 @@ private fun CalendarDay(
         modifier = modifier
             .padding(2.dp)
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(ToolShape.md)
             .background(container)
             .then(
                 if (borderColor != null && borderWidth > 0.dp) {
-                    Modifier.border(borderWidth, borderColor, RoundedCornerShape(10.dp))
+                    Modifier.border(borderWidth, borderColor, ToolShape.md)
                 } else {
                     Modifier
                 },
@@ -234,7 +234,7 @@ private fun LegendItem(color: Color, label: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Box(Modifier.size(10.dp).clip(RoundedCornerShape(3.dp)).background(color))
+        Box(Modifier.size(10.dp).clip(ToolShape.xs).background(color))
         Text(
             label,
             style = MaterialTheme.typography.labelSmall,

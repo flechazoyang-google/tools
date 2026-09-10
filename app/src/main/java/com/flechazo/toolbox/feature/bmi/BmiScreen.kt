@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -28,6 +27,7 @@ import com.flechazo.toolbox.core.designsystem.components.ResultCard
 import com.flechazo.toolbox.core.designsystem.components.ToolTextField
 import com.flechazo.toolbox.core.designsystem.components.ToolScaffold
 import com.flechazo.toolbox.core.designsystem.components.ToolSectionCard
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -116,7 +116,7 @@ private fun BmiBand(bmi: Double?) {
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 1.dp)
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                        .clip(ToolShape.xs)
                         .background(colors[i].copy(alpha = if (i == index) 1f else 0.35f)),
                 )
             }

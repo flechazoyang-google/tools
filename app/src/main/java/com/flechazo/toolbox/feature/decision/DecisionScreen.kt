@@ -5,7 +5,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -40,6 +39,7 @@ import com.flechazo.toolbox.core.designsystem.components.SegmentedTabs
 import com.flechazo.toolbox.core.designsystem.components.ToolTextField
 import com.flechazo.toolbox.core.designsystem.components.ToolScaffold
 import com.flechazo.toolbox.core.designsystem.components.ToolSectionCard
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -244,7 +244,7 @@ fun DecisionScreen(onBack: () -> Unit, viewModel: DecisionViewModel = hiltViewMo
                         Box(
                             modifier = Modifier
                                 .size(16.dp)
-                                .clip(RoundedCornerShape(4.dp))
+                                .clip(ToolShape.xs)
                                 .background(Color(WheelColors[index % WheelColors.size])),
                         )
                         Spacer(Modifier.width(12.dp))
@@ -373,7 +373,7 @@ private fun WheelView(state: DecisionUiState, rotation: Float) {
         Box(
             modifier = Modifier
                 .size(48.dp)
-                .clip(RoundedCornerShape(100))
+                .clip(ToolShape.full)
                 .background(MaterialTheme.colorScheme.surface),
             contentAlignment = Alignment.Center,
         ) {

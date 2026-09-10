@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,6 +27,7 @@ import com.flechazo.toolbox.core.designsystem.components.KeyValueRow
 import com.flechazo.toolbox.core.designsystem.components.ResultCard
 import com.flechazo.toolbox.core.designsystem.components.ToolScaffold
 import com.flechazo.toolbox.core.designsystem.components.ToolSectionCard
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -194,7 +194,7 @@ private fun CalculatorKey(
 
     androidx.compose.foundation.layout.Box(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(ToolShape.lg)
             .background(container)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
         contentAlignment = Alignment.Center,

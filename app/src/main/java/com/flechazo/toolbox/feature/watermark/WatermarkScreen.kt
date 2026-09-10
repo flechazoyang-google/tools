@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -49,6 +48,7 @@ import com.flechazo.toolbox.core.designsystem.components.SegmentedTabs
 import com.flechazo.toolbox.core.designsystem.components.ToolTextField
 import com.flechazo.toolbox.core.designsystem.components.ToolScaffold
 import com.flechazo.toolbox.core.designsystem.components.ToolSectionCard
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
 import com.flechazo.toolbox.core.util.ImageUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -468,7 +468,7 @@ private fun PositionGrid(
     onSelect: (WatermarkPosition) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val cellShape = RoundedCornerShape(8.dp)
+    val cellShape = ToolShape.sm
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(6.dp),

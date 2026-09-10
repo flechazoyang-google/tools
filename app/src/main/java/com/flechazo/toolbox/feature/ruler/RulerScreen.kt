@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -78,7 +79,13 @@ fun RulerScreen(onBack: () -> Unit) {
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val labelStyle = TextStyle(fontSize = 12.sp, color = labelColor, fontWeight = FontWeight.Medium)
 
-    Column(Modifier.fillMaxSize()) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            // 这一个页面没用 ToolScaffold，得自己领 insets：让开底部/横屏侧边的系统导航条。
+            // 顶部由 ToolTopBar 自带的 statusBarsPadding 负责。
+            .navigationBarsPadding(),
+    ) {
         Box(Modifier.padding(horizontal = 16.dp)) {
             ToolTopBar(
                 title = "尺子",

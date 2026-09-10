@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -40,6 +39,7 @@ import com.flechazo.toolbox.core.designsystem.components.KeyValueRow
 import com.flechazo.toolbox.core.designsystem.components.SegmentedTabs
 import com.flechazo.toolbox.core.designsystem.components.ToolScaffold
 import com.flechazo.toolbox.core.designsystem.components.ToolSectionCard
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -228,7 +228,7 @@ fun PomodoroScreen(onBack: () -> Unit, viewModel: PomodoroViewModel = hiltViewMo
                         modifier = Modifier
                             .padding(horizontal = 4.dp)
                             .size(10.dp)
-                            .clip(RoundedCornerShape(100))
+                            .clip(ToolShape.full)
                             .background(
                                 if (index < filledInSet) {
                                     ringColor

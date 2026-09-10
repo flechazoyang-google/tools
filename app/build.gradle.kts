@@ -39,6 +39,18 @@ android {
     }
 
     buildTypes {
+        debug {
+            // 调试包也挂 release 签名。
+            //
+            // 设备上装的是 release 版；若 debug 用默认 debug keystore，`assembleDebug`
+            // 出来的包与已装版本签名不一致，`adb install -r` / Android Studio 的 Run
+            // 会直接报 INSTALL_FAILED_UPDATE_INCOMPATIBLE，只能卸载重装——而卸载会
+            // 清掉本地数据（倒数日、密码箱都是本地存储）。
+            // 共用签名后，debug 包可以直接覆盖安装，数据无损，Run 也不再撞签名墙。
+            if (keystoreProps.isNotEmpty()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -30,6 +32,9 @@ import androidx.lifecycle.viewModelScope
 import com.flechazo.toolbox.core.data.LegacyImporter
 import com.flechazo.toolbox.core.data.SettingsRepository
 import com.flechazo.toolbox.core.data.ThemeMode
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
+import com.flechazo.toolbox.core.designsystem.theme.horizontalSafePadding
+import com.flechazo.toolbox.core.designsystem.theme.statusBarTopInset
 import com.flechazo.toolbox.core.update.UpdateRepository
 import com.flechazo.toolbox.core.update.UpdateUiState
 import com.flechazo.toolbox.feature.countdown.CountdownBackup
@@ -162,7 +167,10 @@ class SettingsViewModel @Inject constructor(
 }
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsScreen(
+    bottomBarPadding: Dp = 0.dp,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val importMessage by viewModel.importMessage.collectAsStateWithLifecycle()
     val updateState by viewModel.updateState.collectAsStateWithLifecycle()
@@ -197,13 +205,19 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            // 左右让开刘海；纵向留白写进滚动内容里，内容才能从状态栏/玻璃栏下滚过
+            .horizontalSafePadding()
             .verticalScroll(rememberScrollState()),
     ) {
         Text(
             "我的",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp),
+            modifier = Modifier.padding(
+                start = 16.dp,
+                top = statusBarTopInset() + 20.dp,
+                bottom = 8.dp,
+            ),
         )
 
         SectionCard {
@@ -343,6 +357,9 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 )
             }
         }
+
+        // 底部让开玻璃底栏 + 系统导航条，否则「关于」卡会被压在栏下
+        Spacer(Modifier.height(bottomBarPadding + 24.dp))
     }
 
     if (showMasterDialog) {
@@ -388,7 +405,7 @@ private fun SectionCard(content: @Composable () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        shape = ToolShape.lg,
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Column { content() }

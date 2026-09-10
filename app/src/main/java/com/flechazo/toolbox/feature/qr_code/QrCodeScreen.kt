@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +44,7 @@ import com.flechazo.toolbox.core.designsystem.components.SegmentedTabs
 import com.flechazo.toolbox.core.designsystem.components.ToolTextField
 import com.flechazo.toolbox.core.designsystem.components.ToolScaffold
 import com.flechazo.toolbox.core.designsystem.components.ToolSectionCard
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
 import com.flechazo.toolbox.core.util.ImageUtils
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.BinaryBitmap
@@ -249,7 +249,7 @@ private fun GeneratePanel(
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(ToolShape.md)
                     .background(Color.White)
                     .padding(12.dp),
                 contentAlignment = Alignment.Center,

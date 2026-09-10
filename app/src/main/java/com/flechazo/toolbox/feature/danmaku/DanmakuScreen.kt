@@ -35,6 +35,7 @@ import com.flechazo.toolbox.core.designsystem.components.SegmentedTabs
 import com.flechazo.toolbox.core.designsystem.components.ToolTextField
 import com.flechazo.toolbox.core.designsystem.components.ToolScaffold
 import com.flechazo.toolbox.core.designsystem.components.ToolSectionCard
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -134,7 +135,7 @@ fun DanmakuScreen(onBack: () -> Unit, viewModel: DanmakuViewModel = hiltViewMode
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                    .clip(ToolShape.md)
                     .background(Color(state.backgroundColor.color)),
                 contentAlignment = Alignment.Center,
             ) {
@@ -243,10 +244,10 @@ private fun <T> ColorPicker(
                 modifier = Modifier
                     .weight(1f)
                     .aspectRatio(1f)
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                    .clip(ToolShape.sm)
                     .background(Color(color))
                     .then(if (isSelected) {
-                        Modifier.border(3.dp, MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                        Modifier.border(3.dp, MaterialTheme.colorScheme.primary, ToolShape.sm)
                     } else Modifier)
                     .clickable { onSelect(option) },
                 contentAlignment = Alignment.Center,

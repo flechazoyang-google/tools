@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PushPin
@@ -32,10 +31,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -92,10 +91,10 @@ fun CountdownHeroCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
+            .clip(ToolShape.xl)
             .clickable(onClick = onClick)
             .semantics { contentDescription = cardDescription(item) },
-        shape = RoundedCornerShape(22.dp),
+        shape = ToolShape.xl,
         // 今天用实心强调；其余情况用同一色的浅色容器，避免整屏都是高饱和块
         color = if (isToday) container else container.copy(alpha = if (dark) 0.28f else 0.5f),
     ) {
@@ -135,7 +134,7 @@ fun CountdownHeroCard(
                         item.display.bigNumber,
                         style = MaterialTheme.typography.displaySmall.copy(
                             fontSize = bigNumberSize(item.display.bigNumber).sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFeatureSettings = "tnum",
                         ),
                         color = container,
                         maxLines = 1,
@@ -156,7 +155,7 @@ fun CountdownHeroCard(
                 Spacer(Modifier.height(8.dp))
                 LinearProgressIndicator(
                     progress = { p },
-                    modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                    modifier = Modifier.fillMaxWidth().height(4.dp).clip(ToolShape.full),
                     color = container,
                     trackColor = muted.copy(alpha = 0.25f),
                     gapSize = 0.dp,
@@ -191,7 +190,7 @@ fun CountdownEventCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(ToolShape.lg)
             .then(
                 if (onLongClick != null) {
                     Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
@@ -200,7 +199,7 @@ fun CountdownEventCard(
                 },
             )
             .semantics { contentDescription = cardDescription(item) },
-        shape = RoundedCornerShape(18.dp),
+        shape = ToolShape.lg,
         color = when {
             highlighted -> scheme.secondaryContainer
             isToday -> accent.copy(alpha = if (dark) 0.3f else 0.45f)
@@ -258,7 +257,7 @@ fun CountdownEventCard(
                         item.display.bigNumber,
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontSize = bigNumberSize(item.display.bigNumber).sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFeatureSettings = "tnum",
                         ),
                         color = numberColor,
                         maxLines = 1,

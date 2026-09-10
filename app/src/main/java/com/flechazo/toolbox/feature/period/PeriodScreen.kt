@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -67,6 +66,7 @@ import com.flechazo.toolbox.core.designsystem.components.ResultCard
 import com.flechazo.toolbox.core.designsystem.components.ToolScaffold
 import com.flechazo.toolbox.core.designsystem.components.ToolSectionCard
 import com.flechazo.toolbox.core.designsystem.components.ToolTextField
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -148,7 +148,7 @@ fun PeriodScreen(onBack: () -> Unit, viewModel: PeriodViewModel = hiltViewModel(
                     contentDescription = "设置",
                     modifier = Modifier
                         .size(44.dp)
-                        .clip(RoundedCornerShape(100.dp))
+                        .clip(ToolShape.full)
                         .clickable { showSettings = true }
                         .padding(10.dp),
                     tint = MaterialTheme.colorScheme.onSurface,
@@ -469,7 +469,7 @@ private fun CycleTrendCard(state: PeriodUiState) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height((64f * value / maxCycle).dp)
-                            .clip(RoundedCornerShape(6.dp))
+                            .clip(ToolShape.xs)
                             .background(MaterialTheme.colorScheme.primaryContainer),
                     )
                     Spacer(Modifier.height(4.dp))

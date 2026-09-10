@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
@@ -27,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -34,7 +34,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.flechazo.toolbox.core.data.ToolsStateRepository
 import com.flechazo.toolbox.core.designsystem.theme.CategoryColor
-import com.flechazo.toolbox.core.designsystem.theme.CategoryColors
+import com.flechazo.toolbox.core.designsystem.theme.Space
+import com.flechazo.toolbox.core.designsystem.theme.ToolShape
+import com.flechazo.toolbox.core.designsystem.theme.categoryColor
+import com.flechazo.toolbox.core.designsystem.theme.horizontalSafePadding
+import com.flechazo.toolbox.core.designsystem.theme.rememberToolHaptics
+import com.flechazo.toolbox.core.designsystem.theme.statusBarTopInset
 import com.flechazo.toolbox.core.registry.ToolCatalog
 import com.flechazo.toolbox.core.registry.ToolCategory
 import com.flechazo.toolbox.core.registry.ToolDef
@@ -73,13 +78,22 @@ class ToolsViewModel @Inject constructor(
 @Composable
 fun ToolsScreen(
     openTool: (String) -> Unit,
+    bottomBarPadding: Dp = 0.dp,
     viewModel: ToolsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            // 左右让开刘海；纵向用 contentPadding，内容才能从状态栏/玻璃栏下滚过
+            .horizontalSafePadding(),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            end = 16.dp,
+            top = statusBarTopInset() + 8.dp,
+            bottom = bottomBarPadding + 8.dp,
+        ),
     ) {
         item {
             Text(
@@ -110,34 +124,35 @@ fun ToolsScreen(
     }
 }
 
+/** 工具列表行。分类页（[CategoryScreen]）复用同一个行样式，保证两处观感一致。 */
 @Composable
-private fun ToolRow(
+internal fun ToolRow(
     tool: ToolDef,
     favorite: Boolean,
     onClick: () -> Unit,
     onToggleFavorite: () -> Unit,
 ) {
-    val catColor: CategoryColor = CategoryColors[tool.category.key]
-        ?: CategoryColor(MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer)
+    val haptics = rememberToolHaptics()
+    val catColor: CategoryColor = categoryColor(tool.category.key)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .padding(vertical = Space.xs)
+            .clip(ToolShape.md)
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .padding(horizontal = Space.sm, vertical = Space.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(ToolShape.md)
                 .background(catColor.container),
             contentAlignment = Alignment.Center,
         ) {
             Icon(tool.icon, contentDescription = null, tint = catColor.on, modifier = Modifier.size(20.dp))
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(Space.md))
         Column(Modifier.weight(1f)) {
             Text(tool.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
             Text(
@@ -152,8 +167,11 @@ private fun ToolRow(
             tint = if (favorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
             modifier = Modifier
                 .size(40.dp)
-                .clip(RoundedCornerShape(100))
-                .clickable(onClick = onToggleFavorite)
+                .clip(ToolShape.full)
+                .clickable {
+                    haptics.confirm()
+                    onToggleFavorite()
+                }
                 .padding(10.dp),
         )
     }
