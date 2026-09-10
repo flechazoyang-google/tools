@@ -47,9 +47,9 @@ releases/**/*.apk
 .reasonix/
 .workbuddy/
 
-# 本地工作台账（未完成项跟踪，仅本机留存，不提交）
-docs/PERIOD_P1_BACKLOG.md
-docs/COUNTDOWN_P1_BACKLOG.md
+# 待办台账：内容仅本机留存，只提交 backlog/README.md（写作契约）与 scripts/backlog.mjs
+backlog/*
+!backlog/README.md
 
 # UI 转储 / 临时调试文件
 uc.xml

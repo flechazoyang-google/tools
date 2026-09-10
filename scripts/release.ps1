@@ -6,6 +6,8 @@
   只发布正式版，只推 GitHub。执行前请确保：
     1. 当前在 main 分支且工作区干净
     2. 已写好 releases/v<版本>/RELEASE_NOTE.md（缺失时脚本会生成模板并中止）
+    3. 待办台账体检通过（backlog/*.md 里没有挂在本次或已发布版本上的未完成 P1；
+       见 backlog/README.md，可用 -SkipBacklogCheck 跳过）
 
 .PARAMETER Version
   本次版本号，格式 x.y.z（如 1.1.2）。
@@ -27,6 +29,7 @@ param(
     [Parameter(Mandatory = $true)][string]$Version,
     [string]$Notes,
     [switch]$SkipTests,
+    [switch]$SkipBacklogCheck,
     [switch]$DryRun
 )
 
@@ -102,6 +105,25 @@ Version Code：$newCode
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $notesPath) | Out-Null
         Set-Content -Path $notesPath -Value $template -Encoding UTF8
         Die "已生成版本说明模板，请填写内容后重新运行：$notesPath"
+    }
+}
+
+# ---------- 1.5 待办台账体检（只拦硬问题） ----------
+# 拦的是"台账已经在骗人"这类：计划版本还挂着已发布/本次版本的 P1 却没做完。
+# 只读不改；确实要带着已知缺口发版时用 -SkipBacklogCheck。
+if ($SkipBacklogCheck) {
+    Warn "已跳过待办台账体检（-SkipBacklogCheck）。请自行确认 backlog/ 里没有未核销的 P1。"
+} else {
+    $node = (Get-Command node -ErrorAction SilentlyContinue).Source
+    if (-not $node) {
+        Warn "找不到 node，跳过待办台账体检；请手动执行：node scripts/backlog.mjs --check --release $tag"
+    } else {
+        Info "体检待办台账（backlog/*.md）…"
+        & $node (Join-Path $repoRoot 'scripts\backlog.mjs') --check --release $tag
+        if ($LASTEXITCODE -ne 0) {
+            Die "待办台账体检未通过：本次 $tag 仍有未核销的 P1，或台账与仓库事实不一致。`n请处理 backlog/ 中的条目后重跑；确要带缺口发版则加 -SkipBacklogCheck。"
+        }
+        Info "台账体检通过"
     }
 }
 
