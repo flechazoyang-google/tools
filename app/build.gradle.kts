@@ -20,8 +20,8 @@ android {
         applicationId = "com.flechazo.toolbox"
         minSdk = 26
         targetSdk = 34
-        versionCode = 6
-        versionName = "1.2.0"
+        versionCode = 7
+        versionName = "1.2.1"
         // 「检查更新」读取的 GitHub 仓库（owner/repo）
         buildConfigField("String", "UPDATE_REPO", "\"flechazoyang-google/tools\"")
         vectorDrawables { useSupportLibrary = true }
